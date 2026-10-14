@@ -1,5 +1,239 @@
 {
   "schemaVersion": 1,
-  "overrides": []
+  "overrides": [
+    {
+      "id": "property-105-display-point",
+      "entityType": "property",
+      "entityId": "105",
+      "displayPoint": {
+        "latitude": 37.7784297,
+        "longitude": -122.4582257
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Angelo+J.+Rossi+Playground/@37.7784318,-122.4595132,18z/data=!3m1!4b1!4m6!3m5!1s0x80858747fe948c71:0xcebd80fb43e1ff84!8m2!3d37.7784297!4d-122.4582257!16s%2Fg%2F1tdkxxkg",
+      "reason": "Better accuracy",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-166-display-point",
+      "entityType": "property",
+      "entityId": "166",
+      "displayPoint": {
+        "latitude": 37.7914274,
+        "longitude": -122.4534308
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Presidio+Wall+Playground+Park/@37.7914316,-122.4560057,17z/data=!3m1!4b1!4m6!3m5!1s0x8085872e407395fb:0x23200c1ec057eb72!8m2!3d37.7914274!4d-122.4534308!16s%2Fg%2F1vv2sght",
+      "reason": "More accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-129-display-point",
+      "entityType": "property",
+      "entityId": "129",
+      "displayPoint": {
+        "latitude": 37.791209,
+        "longitude": -122.4377047
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Alta+Plaza+Park/@37.7912132,-122.4402796,17z/data=!3m1!4b1!4m6!3m5!1s0x808580cf24842f9d:0xffb0154102337e61!8m2!3d37.791209!4d-122.4377047!16s%2Fm%2F02vw3sz",
+      "reason": "More accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-128-display-point",
+      "entityType": "property",
+      "entityId": "128",
+      "displayPoint": {
+        "latitude": 37.79165,
+        "longitude": -122.4275889
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Lafayette+Park/@37.7916542,-122.4301638,16z/data=!3m1!4b1!4m6!3m5!1s0x808580c11ab4730b:0xc33e31debab892e0!8m2!3d37.79165!4d-122.4275889!16s%2Fm%2F0479qdb",
+      "reason": "More accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-27-display-point",
+      "entityType": "property",
+      "entityId": "27",
+      "displayPoint": {
+        "latitude": 37.7124145,
+        "longitude": -122.4089855
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Yik+Oi+Huang+Peace+and+Friendship+Park/@37.7120723,-122.409725,19z/data=!4m6!3m5!1s0x808f7fc9873ecb89:0xce8bef72a7a3f8a4!8m2!3d37.7124145!4d-122.4089855!16s%2Fg%2F11h75w1l5d",
+      "reason": "More accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-177-display-point",
+      "entityType": "property",
+      "entityId": "177",
+      "displayPoint": {
+        "latitude": 37.7141451,
+        "longitude": -122.4057017
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Visitacion+Valley+Greenway+Community+Garden/@37.7148405,-122.4086176,17z/data=!4m10!1m2!2m1!1sVisitacion+Valley+Greenway!3m6!1s0x808f7ed9528f0001:0xb8a301c7c847e5aa!8m2!3d37.7141451!4d-122.4057017!15sChpWaXNpdGFjaW9uIFZhbGxleSBHcmVlbndheVocIhp2aXNpdGFjaW9uIHZhbGxleSBncmVlbndheZIBEGNvbW11bml0eV9nYXJkZW6aASNDaFpEU1VoTk1HOW5TMFZKUTBGblRVUnZOblo2YVU5QkVBReABAPoBBAgAECI!16s%2Fg%2F11g0k1fz09",
+      "reason": "more accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-957232-display-point",
+      "entityType": "property",
+      "entityId": "957232",
+      "displayPoint": {
+        "latitude": 37.731971,
+        "longitude": -122.3811336
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Shoreview+Park/@37.6505633,-122.4249596,12z/data=!4m10!1m2!2m1!1sShoreview+Park!3m6!1s0x808f7f002dc8a1f7:0x48514c4cb1787f73!8m2!3d37.731971!4d-122.3811336!15sCg5TaG9yZXZpZXcgUGFya5IBCWNpdHlfcGFya-ABAA!16s%2Fg%2F11wy1r5sfj",
+      "reason": "more accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-957480-display-point",
+      "entityType": "property",
+      "entityId": "957480",
+      "displayPoint": {
+        "latitude": 37.727078,
+        "longitude": -122.366933
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Hillpoint+Park/@37.7275665,-122.3787365,15z/data=!4m10!1m2!2m1!1sShipyard+Park+san+francisco!3m6!1s0x808f7fa0cc27a989:0xf7ebfad6088f3a2f!8m2!3d37.727078!4d-122.366933!15sChtTaGlweWFyZCBQYXJrIHNhbiBmcmFuY2lzY2-SAQRwYXJr4AEA!16s%2Fg%2F11v03v17w2",
+      "reason": "more accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-137649-display-point",
+      "entityType": "property",
+      "entityId": "137649",
+      "displayPoint": {
+        "latitude": 37.7176836,
+        "longitude": -122.3957867
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Ralph+D.+House+Community+Park/@37.7176877,-122.4006576,17z/data=!4m14!1m7!3m6!1s0x808f7f2bd50f7ad1:0x60a6fd164767019b!2sRalph+D.+House+Community+Park!8m2!3d37.7176836!4d-122.3957867!16s%2Fg%2F11f6kw47rm!3m5!1s0x808f7f2bd50f7ad1:0x60a6fd164767019b!8m2!3d37.7176836!4d-122.3957867!16s%2Fg%2F11f6kw47rm",
+      "reason": "more accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-42-display-point",
+      "entityType": "property",
+      "entityId": "42",
+      "displayPoint": {
+        "latitude": 37.7101779,
+        "longitude": -122.3980892
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Little+Hollywood+Park/@37.7101821,-122.4006641,17z/data=!3m1!4b1!4m6!3m5!1s0x808f7f28fa1dc2e3:0xbef984386d1f140e!8m2!3d37.7101779!4d-122.3980892!16s%2Fg%2F1tngqj7x",
+      "reason": "more accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-40-display-point",
+      "entityType": "property",
+      "entityId": "40",
+      "displayPoint": {
+        "latitude": 37.7347065,
+        "longitude": -122.3896763
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Joseph+Lee+Recreation+Center/@37.7347107,-122.3922512,17z/data=!3m1!4b1!4m6!3m5!1s0x808f7f0ff3439233:0xb1bdbc4b05484e54!8m2!3d37.7347065!4d-122.3896763!16s%2Fg%2F12xp_2jp4",
+      "reason": "more accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-48-display-point",
+      "entityType": "property",
+      "entityId": "48",
+      "displayPoint": {
+        "latitude": 37.7341538,
+        "longitude": -122.3759418
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/India+Basin+Shoreline+Park/@37.7341538,-122.3785221,17z/data=!3m1!4b1!4m6!3m5!1s0x808f7f6bff0d12bb:0xea07aa99f617ba3e!8m2!3d37.7341538!4d-122.3759418!16s%2Fg%2F1td5rhvg",
+      "reason": "The City source point falls in the water-facing portion of a multipart property geometry and is not a useful public map marker. The reviewed Google Maps place pin identifies the park's land-based location.",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-47-display-point",
+      "entityType": "property",
+      "entityId": "47",
+      "displayPoint": {
+        "latitude": 37.7328291,
+        "longitude": -122.3833628
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Hilltop+Park+(Sundial+park)/@37.7341788,-122.3862415,15z/data=!4m10!1m2!2m1!1shilltop+park!3m6!1s0x808f7f13cc5aec03:0xfeed17bff5085ba!8m2!3d37.7328291!4d-122.3833628!15sCgxoaWxsdG9wIHBhcmtaDiIMaGlsbHRvcCBwYXJrkgEJY2l0eV9wYXJrmgEjQ2haRFNVaE5NRzluUzBWUWRVRTVYMDlmZFhCaU5HUlJFQUXgAQD6AQQIABBI!16s%2Fg%2F1tcvjb28",
+      "reason": "more accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-44-display-point",
+      "entityType": "property",
+      "entityId": "44",
+      "displayPoint": {
+        "latitude": 37.7166558,
+        "longitude": -122.3879132
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Gilman+Playground+Park/@37.71666,-122.3904881,17z/data=!4m14!1m7!3m6!1s0x808f7f3ae3236937:0x360b68a30d8d23aa!2sGilman+Playground+Park!8m2!3d37.7166558!4d-122.3879132!16s%2Fg%2F1thq5jf6!3m5!1s0x808f7f3ae3236937:0x360b68a30d8d23aa!8m2!3d37.7166558!4d-122.3879132!16s%2Fg%2F1thq5jf6",
+      "reason": "more accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-43-display-point",
+      "entityType": "property",
+      "entityId": "43",
+      "displayPoint": {
+        "latitude": 37.7154342,
+        "longitude": -122.3929115
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Bayview+Park/@37.7166808,-122.3982129,15z/data=!4m10!1m2!2m1!1sbay+view+park!3m6!1s0x808f7f2685ed1a43:0xd17885a22f3f1301!8m2!3d37.7154342!4d-122.3929115!15sCg1iYXkgdmlldyBwYXJrWg8iDWJheSB2aWV3IHBhcmuSAQljaXR5X3BhcmuaAURDaTlEUVVsUlFVTnZaRU5vZEhsalJqbHZUMnBqZDFOR09UUlNNMDVaWkhwbmVXUlZhekpoUmxKTVdtMDFiMlZzUlJBQuABAPoBBAgAEC8!16s%2Fg%2F11c328wr42",
+      "reason": "more accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-38-display-point",
+      "entityType": "property",
+      "entityId": "38",
+      "displayPoint": {
+        "latitude": 37.7261984,
+        "longitude": -122.393221
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Bayview+K.C.+Jones+Playground+Park/@37.7262025,-122.3980919,16z/data=!3m1!4b1!4m6!3m5!1s0x808f7f1908a3c5b9:0xa67b5d6c461ea898!8m2!3d37.7261984!4d-122.393221!16s%2Fg%2F1td1vp73",
+      "reason": "more accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-46-display-point",
+      "entityType": "property",
+      "entityId": "46",
+      "displayPoint": {
+        "latitude": 37.7310279,
+        "longitude": -122.3838164
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/Adam+Rogers+Park/@37.731032,-122.3886873,17z/data=!3m1!4b1!4m6!3m5!1s0x808f7f13fb037899:0xc21fa4c3141c888c!8m2!3d37.7310279!4d-122.3838164!16s%2Fg%2F1tdp9vrv",
+      "reason": "more accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    },
+    {
+      "id": "property-957472-display-point",
+      "entityType": "property",
+      "entityId": "957472",
+      "displayPoint": {
+        "latitude": 37.7322136,
+        "longitude": -122.3757745
+      },
+      "evidenceUrl": "https://www.google.com/maps/place/India+Basin+Waterfront+Park/@37.7322948,-122.3758208,21z/data=!4m10!1m2!2m1!1spark!3m6!1s0x808f7f5cee57115b:0xf50b96c1df08e3ab!8m2!3d37.7322136!4d-122.3757745!15sCgRwYXJrWgYiBHBhcmuSAQljaXR5X3BhcmuaASRDaGREU1VoTk1HOW5TMFZKUTBGblNVUmZNUzB6WkhOUlJSQULgAQD6AQQIbxAc!16s%2Fg%2F11kq3_znhz",
+      "reason": "more accurate",
+      "reviewedAt": "2026-10-13",
+      "reviewedBy": "project-owner"
+    }
+  ]
 }
-

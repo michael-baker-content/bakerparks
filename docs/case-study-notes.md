@@ -2,6 +2,20 @@
 
 Living source document for a future PowerPoint or PDF case study.  
 
+## Session update: reviewed coordinate overrides
+
+- Added a fail-closed manual correction layer for the narrow case where an
+  official coordinate is technically valid but produces a misleading public
+  map marker. Corrections require an entity ID, evidence URL, reason, reviewer,
+  and review date; the original source point remains in the audit report.
+- India Basin Shoreline Park became the first example. Its City source point
+  falls within the multipart official geometry but visually places the marker
+  in the water-facing portion. A reviewed Google Maps place pin now supplies a
+  more useful land-based marker.
+- The normalized point remains the single source used by MapLibre, Google Maps,
+  driving directions, transit proximity, and nearby-place calculations, which
+  prevents independent map corrections from drifting apart.
+
 ## Session update: a location-neutral photographic fallback
 
 - Replaced the generated placeholder illustration with an original photograph
@@ -1199,3 +1213,18 @@ properly attributed.
   covering default, visited, hover, active, keyboard focus, and disabled states.
   Automated contrast checks now protect the palette, and rendered verification
   confirms white text on the dark-green outline-button hover treatment.
+## Session update: area and neighborhood pathways
+
+The project added an intermediate browsing layer between a citywide search and
+individual park pages. Every populated area and neighborhood filter now has a
+landing page with concise, cited wiki context and visual child tiles. Parks can
+appear in more than one neighborhood when the source labels overlap. Empty
+neighborhoods are excluded rather than presented as dead ends, while the two
+out-of-city properties appear directly on their area page because no
+neighborhood label exists for them.
+
+These pages use the same local editorial workflow as park notices: their
+introductions, wiki citations, representative images, temporary alerts, and
+tile order or visibility can be reviewed without creating a public editing
+surface. The design explicitly identifies the area groupings as navigation
+tools rather than official civic boundaries.

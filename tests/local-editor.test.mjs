@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, mkdir, copyFile, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
-import { openStore, validateNotice } from "../tools/admin/store.mjs";
+import { coordinatesFromGoogleMapsUrl, openStore, validateNotice } from "../tools/admin/store.mjs";
 import { getActiveParkNotice } from "../src/lib/park-notices.js";
 
 test("notices expire after the chosen San Francisco day and fail closed when inactive", () => {
@@ -25,11 +25,18 @@ test("notice links are optional, trimmed, and restricted to safe web addresses",
   for (const url of ["javascript:alert(1)", "data:text/html,bad", "/relative", "https://user:password@example.com"]) assert.throws(() => validateNotice({ ...notice, url }, ids));
 });
 
+test("Google Maps links use place-pin coordinates ahead of viewport coordinates", () => {
+  const full = "https://www.google.com/maps/place/India+Basin+Shoreline+Park/@37.7341538,-122.3785221,17z/data=!3m1!4b1!4m6!3m5!1s0x808f7f6bff0d12bb:0xea07aa99f617ba3e!8m2!3d37.7341538!4d-122.3759418!16s%2Fg%2F1td5rhvg";
+  assert.deepEqual(coordinatesFromGoogleMapsUrl(full), { latitude: 37.7341538, longitude: -122.3759418, evidenceUrl: full });
+  assert.throws(() => coordinatesFromGoogleMapsUrl("https://maps.app.goo.gl/example"), /full|complete/i);
+  assert.throws(() => coordinatesFromGoogleMapsUrl("https://example.com/@37.7,-122.4,17z"), /Google Maps/);
+});
+
 test("local editor seeds photos, preserves sources, and safely removes catalog entries without deleting Blob records", async () => {
   const root = await mkdtemp(join(tmpdir(), "parks-editor-test-"));
   let store;
   try {
-    const files = ["data/media/media-manifest.json", "data/media/blob-assets.json", "data/content/park-alerts.json", "data/presentation/generated/destinations.json", "data/content/evergreen-content.json", "data/normalized/transit.json"];
+    const files = ["data/media/media-manifest.json", "data/media/blob-assets.json", "data/content/park-alerts.json", "data/content/place-pages.json", "data/presentation/generated/destinations.json", "data/content/evergreen-content.json", "data/normalized/transit.json", "data/normalization/overrides.json"];
     const posts = await readdir(new URL("../content/blog/", import.meta.url));
     files.push(...posts.filter((name) => name.endsWith(".md")).map((name) => `content/blog/${name}`));
     for (const path of files) { await mkdir(dirname(join(root, path)), { recursive: true }); await copyFile(new URL(`../${path}`, import.meta.url), join(root, path)); }
@@ -38,6 +45,19 @@ test("local editor seeds photos, preserves sources, and safely removes catalog e
     const manifest = JSON.parse(await readFile(new URL("../data/media/media-manifest.json", import.meta.url)));
     assert.equal(before.images.length, manifest.images.length);
     assert.ok(before.images.some((image) => image.sourceType === "project-original"));
+    const placePage = before.placePages.find((item) => item.type === "neighborhood" && item.children.length > 1);
+    const reversedChildren = [...placePage.children].reverse().map((item, index) => ({ id: item.id, visible: index !== 0 }));
+    await store.savePlacePage({ type: placePage.type, id: placePage.id, shortDescription: "A concise reviewed description.", overview: placePage.overview, imagePath: placePage.imagePath, sources: placePage.sources.map((source) => `${source.title} | ${source.url}`).join("\n"), alertActive: true, alertTitle: "Test area notice", alertBody: "Temporary information.", alertExpiresOn: "2026-12-31", alertUrl: "https://sfrecpark.org/", alertUrlText: "Official details", children: reversedChildren });
+    const savedPlace = (await store.state()).placePages.find((item) => item.type === placePage.type && item.id === placePage.id);
+    assert.equal(savedPlace.shortDescription, "A concise reviewed description.");
+    assert.equal(savedPlace.children[0].id, reversedChildren[0].id);
+    assert.equal(savedPlace.children[0].visible, false);
+    assert.equal(savedPlace.alert.urlText, "Official details");
+    const coordinatePark = before.parks.find((park) => park.id === "india-basin-shoreline-park");
+    await store.saveCoordinateOverride({ destinationId: coordinatePark.id, evidenceUrl: "https://www.google.com/maps/place/India+Basin+Shoreline+Park/@37.7341538,-122.3785221,17z/data=!3d37.7341538!4d-122.3759418", reason: "Reviewed place pin is on park land.", reviewedBy: "project-owner" });
+    const savedOverride = (await store.state()).coordinateOverrides.find((item) => item.entityType === "property" && item.entityId === coordinatePark.propertyIds[0]);
+    assert.deepEqual(savedOverride.displayPoint, { latitude: 37.7341538, longitude: -122.3759418 });
+    assert.equal(savedOverride.reviewedBy, "project-owner");
     const parkId = before.images[0].destinationId;
     const drafts = before.images.filter((image) => image.destinationId === parkId).reverse().map((image) => ({ ...image, visible: true }));
     drafts[0].visible = false;

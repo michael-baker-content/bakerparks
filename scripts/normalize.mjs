@@ -70,6 +70,56 @@ export function isUsableCoordinatePair(latitudeValue, longitudeValue) {
 
 export const MAX_SOURCE_SHAPE_DISTANCE_MILES = 0.5;
 
+const overrideEntityTypes = new Set(["property", "facility", "functional-area"]);
+
+export function validateCoordinateOverrides(document) {
+  if (document?.schemaVersion !== 1 || !Array.isArray(document.overrides)) throw new Error("Coordinate overrides must use schema version 1 and an overrides array.");
+  const identities = new Set();
+  return document.overrides.map((override) => {
+    if (!override?.id || !overrideEntityTypes.has(override.entityType) || !override.entityId) throw new Error("Each coordinate override requires an ID, supported entity type, and entity ID.");
+    if (!isUsableCoordinatePair(override.displayPoint?.latitude, override.displayPoint?.longitude)) throw new Error(`${override.id}: replacement latitude and longitude are invalid.`);
+    if (!override.reason?.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(override.reviewedAt ?? "") || !override.reviewedBy?.trim()) throw new Error(`${override.id}: reason, review date, and reviewer are required.`);
+    let evidenceUrl;
+    try { evidenceUrl = new URL(override.evidenceUrl); } catch { throw new Error(`${override.id}: evidence URL must be a complete HTTPS address.`); }
+    if (evidenceUrl.protocol !== "https:" || evidenceUrl.username || evidenceUrl.password) throw new Error(`${override.id}: evidence URL must be HTTPS without embedded credentials.`);
+    const identity = `${override.entityType}:${override.entityId}`;
+    if (identities.has(identity)) throw new Error(`${override.id}: only one coordinate override is allowed per entity.`);
+    identities.add(identity);
+    return {
+      ...override,
+      displayPoint: { latitude: Number(override.displayPoint.latitude), longitude: Number(override.displayPoint.longitude) },
+      reason: override.reason.trim(),
+      reviewedBy: override.reviewedBy.trim(),
+      evidenceUrl: evidenceUrl.toString()
+    };
+  });
+}
+
+function applyCoordinateOverrides(records, overrides, entityType) {
+  const recordsById = new Map(records.map((record) => [record.id, record]));
+  for (const override of overrides.filter((item) => item.entityType === entityType)) {
+    const record = recordsById.get(override.entityId);
+    if (!record) throw new Error(`${override.id}: ${entityType} ${override.entityId} was not found.`);
+    const sourcePoint = record.displayPoint
+      ? { latitude: record.displayPoint.latitude, longitude: record.displayPoint.longitude }
+      : null;
+    const replacementPoint = { ...override.displayPoint, precision: "reviewed-manual-point" };
+    record.displayPoint = replacementPoint;
+    record.coordinateReview = {
+      reason: "reviewed-manual-override",
+      sourcePoint,
+      replacementPoint,
+      override: {
+        id: override.id,
+        evidenceUrl: override.evidenceUrl,
+        reason: override.reason,
+        reviewedAt: override.reviewedAt,
+        reviewedBy: override.reviewedBy
+      }
+    };
+  }
+}
+
 function displayPointReview(rows, parentPoint = null) {
   for (const row of rows) {
     const sourcePoint = isUsableCoordinatePair(row.latitude, row.longitude)
@@ -124,7 +174,8 @@ function taxonomyEntry(type, mapping) {
     : null;
 }
 
-export function normalizeDatasets({ properties, facilities, functionalAreas, assets, taxonomy }) {
+export function normalizeDatasets({ properties, facilities, functionalAreas, assets, taxonomy, overrides = { schemaVersion: 1, overrides: [] } }) {
+  const coordinateOverrides = validateCoordinateOverrides(overrides);
   const propertyRows = properties.map((item) => item.data);
   const facilityRows = facilities.map((item) => item.data);
   const functionalRows = functionalAreas.map((item) => item.data);
@@ -152,6 +203,8 @@ export function normalizeDatasets({ properties, facilities, functionalAreas, ass
     }; })
     .sort((a, b) => compareText(a.name, b.name) || compareText(a.id, b.id));
 
+  applyCoordinateOverrides(normalizedProperties, coordinateOverrides, "property");
+
   const propertyMap = new Map(normalizedProperties.map((item) => [item.id, item]));
   const propertyIds = new Set(propertyMap.keys());
   const facilityGroups = groupById(facilityRows, "facility_id");
@@ -178,6 +231,8 @@ export function normalizeDatasets({ properties, facilities, functionalAreas, ass
       sourceReferences: sourceReferences(rows, "datasf-rec-park-facilities")
     };
   }).sort((a, b) => compareText(a.name, b.name) || compareText(a.id, b.id));
+
+  applyCoordinateOverrides(normalizedFacilities, coordinateOverrides, "facility");
 
   const facilityMap = new Map(normalizedFacilities.map((item) => [item.id, item]));
   const normalizedFunctionalAreas = groupById(functionalRows, "funcarea_id").map(([id, rows]) => {
@@ -233,6 +288,7 @@ export function normalizeDatasets({ properties, facilities, functionalAreas, ass
   }
 
   const publicFunctionalAreas = normalizedFunctionalAreas.filter((item) => item.publicClassification);
+  applyCoordinateOverrides(normalizedFunctionalAreas, coordinateOverrides, "functional-area");
   const publicFacilities = normalizedFacilities.filter((item) => item.publicClassification);
   const publicAssets = [...assetSummaries.values()].sort((a, b) => compareText(a.id, b.id));
 
@@ -301,16 +357,13 @@ export async function normalizeImports() {
     loadJson(taxonomyUrl),
     loadJson(overridesUrl)
   ]);
-  if (overrides.overrides.length) {
-    throw new Error("Override application is not implemented; refusing to ignore configured overrides.");
-  }
-
   const result = normalizeDatasets({
     properties: propertySnapshot.records,
     facilities: facilitySnapshot.records,
     functionalAreas: functionalSnapshot.records,
     assets: assetSnapshot.records,
-    taxonomy
+    taxonomy,
+    overrides
   });
   result.report.inputs = {
     propertiesRetrievedAt: propertySnapshot.import.retrievedAt,

@@ -1,4 +1,4 @@
-let state, parkId, imageDrafts = [], blogSlug;
+let state, parkId, imageDrafts = [], blogSlug, placeKey, placeChildren = [];
 const workspace = document.querySelector("#workspace"), status = document.querySelector("#status");
 const escape = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 const message = (value, error = false) => { status.textContent = value; status.classList.toggle("error", error); };
@@ -14,16 +14,19 @@ async function save(path, value) {
 }
 function field(label, name, value = "", kind = "input") { return `<label>${escape(label)}${kind === "input" ? `<input name="${name}" value="${escape(value)}">` : `<textarea name="${name}">${escape(value)}</textarea>`}</label>`; }
 function catchErrors(action) { return async (event) => { event?.preventDefault(); const button = event?.submitter; if (button) button.disabled = true; try { await action(event); } catch (error) { message(error.message, true); } finally { if (button) button.disabled = false; } }; }
-function setTab(blogs) { document.querySelector("#parks-tab").setAttribute("aria-pressed", String(!blogs)); document.querySelector("#blogs-tab").setAttribute("aria-pressed", String(blogs)); }
+function setTab(selected) { for (const id of ["parks", "places", "blogs"]) document.querySelector(`#${id}-tab`).setAttribute("aria-pressed", String(id === selected)); }
 function renderPark() {
-  setTab(false);
+  setTab("parks");
   parkId ||= state.parks[0].id;
   const park = state.parks.find((item) => item.id === parkId);
   const evergreen = state.evergreen.find((item) => item.destinationId === parkId);
   const notice = state.notices.find((item) => item.destinationId === parkId) ?? {};
+  const coordinateTarget = park.principalFacilityIds?.[0] ? { entityType: "facility", entityId: park.principalFacilityIds[0] } : { entityType: "property", entityId: park.propertyIds?.[0] };
+  const coordinateOverride = state.coordinateOverrides.find((item) => item.entityType === coordinateTarget.entityType && item.entityId === coordinateTarget.entityId) ?? {};
   imageDrafts = structuredClone(state.images.filter((image) => image.destinationId === parkId).sort((a, b) => a.position - b.position));
   workspace.innerHTML = `<label>Choose a park<select id="park-select">${state.parks.map((item) => `<option value="${escape(item.id)}" ${item.id === parkId ? "selected" : ""}>${escape(item.publicName)}</option>`).join("")}</select></label><h2>${escape(park.publicName)}</h2>
     <details><summary>Review official and evergreen content (read-only)</summary><h3>About this place</h3><p>${escape(evergreen?.overview?.text || "No reviewed overview.")}</p><pre>${escape(JSON.stringify(evergreen ?? {}, null, 2))}</pre><h3>Official inventory, amenities, map point, and source links</h3><pre>${escape(JSON.stringify(park, null, 2))}</pre><p class="hint">Transit remains sourced from the imported 511 dataset. It is not editable here.</p></details>
+    <section class="map-override"><h3>Map position override</h3><p>Current public map point: <strong>${escape(park.displayPoint?.latitude)}, ${escape(park.displayPoint?.longitude)}</strong></p><p class="hint">This park uses source ${escape(coordinateTarget.entityType)} ${escape(coordinateTarget.entityId)}. Paste a full Google Maps place link. The editor uses the place pin coordinates when the link also contains different viewport coordinates.</p><form id="coordinate-form"><label>Google Maps place link<input type="url" name="evidenceUrl" value="${escape(coordinateOverride.evidenceUrl)}" placeholder="https://www.google.com/maps/place/…" required></label>${field("Why the source point needs to be replaced", "reason", coordinateOverride.reason, "textarea")}${field("Reviewed by", "reviewedBy", coordinateOverride.reviewedBy || "project-owner")}<button>Save map override</button><p class="hint">Saving records the reviewed override and its evidence. Run <code>npm run build:data</code> afterward to update the public map, directions, search, and proximity data.</p></form></section>
     <section class="notice"><h3>Park notice</h3><form id="notice-form"><label class="check"><input type="checkbox" name="active" ${notice.active ? "checked" : ""}> Show this notice</label>${field("Title", "title", notice.title)}${field("Body", "body", notice.body, "textarea")}<label>Expiration date (optional, through end of day in San Francisco)<input type="date" name="expiresOn" value="${escape(notice.expiresOn)}"></label><button>Save notice</button></form></section>
     <section><h3>Page images</h3><p class="hint">Full-image previews. Move up/down to set gallery order. Hidden images remain in Blob and the catalog. Removing an image deletes its catalog entry but keeps its Blob file for recovery. Save image changes after editing.</p><form id="images-form"><div id="image-list"></div><button>Save image changes</button></form></section>
     <section><h3>Upload a photograph to Vercel Blob</h3><p class="hint">Uploads become public immediately. Only upload images you have permission to share. The site does not display them until deployment. Originals are not kept by this tool.</p><form id="upload-form"><label>Image file (JPEG, PNG, WebP; maximum 20 MB)<input type="file" name="file" accept="image/jpeg,image/png,image/webp" required></label>${field("Caption", "caption")}${field("Alt text", "alt")}${field("Creator", "creator", "Michael Baker")}${field("Attribution", "attribution", "Photo by Michael Baker")}${field("License ID", "licenseId", "CC-BY-4.0")}${field("License URL", "licenseUrl", "https://creativecommons.org/licenses/by/4.0/")}<label class="check"><input type="checkbox" name="permission" required> I have permission to publish this photograph under the specified license.</label><button>Upload & add to this park</button></form></section>`;
@@ -32,6 +35,7 @@ function renderPark() {
   workspace.querySelector("details").insertAdjacentHTML("beforeend", `<h3>Nearby transit (read-only)</h3><pre>${escape(JSON.stringify(state.nearbyTransit[parkId], null, 2))}</pre>`);
   renderImages();
   document.querySelector("#notice-form").addEventListener("submit", catchErrors(async (event) => { const values = Object.fromEntries(new FormData(event.target)); await save("/api/notices", { ...values, active: event.target.elements.active.checked, destinationId: parkId }); }));
+  document.querySelector("#coordinate-form").addEventListener("submit", catchErrors(async (event) => { const values = Object.fromEntries(new FormData(event.target)); await save("/api/coordinates", { ...values, destinationId: parkId }); renderPark(); }));
   document.querySelector("#images-form").addEventListener("submit", catchErrors(async () => { await save("/api/images", { destinationId: parkId, images: imageDrafts }); renderPark(); }));
   document.querySelector("#upload-form").addEventListener("submit", catchErrors(async (event) => {
     const values = Object.fromEntries(new FormData(event.target)), file = values.file;
@@ -63,7 +67,7 @@ function renderImages() {
   }));
 }
 function renderBlogs() {
-  setTab(true);
+  setTab("blogs");
   const post = state.blogs.find((item) => item.slug === blogSlug) ?? state.blogs[0];
   blogSlug = post?.slug ?? "";
   workspace.innerHTML = `<section><h2>Blog posts</h2><label>Choose a post<select id="blog-select">${state.blogs.map((item) => `<option ${item.slug === blogSlug ? "selected" : ""}>${escape(item.slug)}</option>`).join("")}</select></label><button type="button" class="secondary" id="new-blog">New post</button><form id="blog-form">${field("Filename / slug (no .md)", "slug", blogSlug)}<label>Full Markdown, including YAML frontmatter<textarea id="markdown" name="markdown" spellcheck="false">${escape(post?.markdown)}</textarea></label><p class="hint">Use existing /media/ paths for blog covers and galleries. Keep title, summary, and publishedAt frontmatter. Saving changes project files immediately; the production build validates the complete schema.</p><button>Save blog post</button></form></section><details><summary>Available image paths for covers and galleries</summary>${state.images.map((image) => `<p><code>${escape(image.localPath)}</code> — ${escape(image.caption)}${image.visible === false ? " (hidden)" : ""}</p>`).join("")}</details>`;
@@ -71,6 +75,31 @@ function renderBlogs() {
   document.querySelector("#new-blog").addEventListener("click", () => { const form = document.querySelector("#blog-form"); form.elements.slug.value = ""; form.elements.markdown.value = `---\ntitle: New park update\nsummary: A short description of this update.\npublishedAt: ${new Date().toISOString().slice(0, 10)}\n---\n\nWrite your post here.\n`; form.elements.slug.focus(); });
   document.querySelector("#blog-form").addEventListener("submit", catchErrors(async (event) => { const values = Object.fromEntries(new FormData(event.target)); await save("/api/blogs", values); blogSlug = values.slug; renderBlogs(); }));
 }
+function renderPlacePages() {
+  setTab("places");
+  placeKey ||= `${state.placePages[0].type}:${state.placePages[0].id}`;
+  const page = state.placePages.find((item) => `${item.type}:${item.id}` === placeKey) ?? state.placePages[0];
+  placeKey = `${page.type}:${page.id}`;
+  placeChildren = structuredClone(page.children);
+  const imagePaths = [...new Set(state.images.filter((image) => image.visible !== false).map((image) => image.localPath))].sort();
+  const sources = page.sources.map((source) => `${source.title} | ${source.url}`).join("\n");
+  const alert = page.alert ?? {};
+  const pageOptions = state.placePages.map((item) => { const key = `${item.type}:${item.id}`; return `<option value="${escape(key)}" ${key === placeKey ? "selected" : ""}>${escape(item.type === "area" ? `Area: ${item.name}` : `Neighborhood: ${item.name}`)}</option>`; }).join("");
+  workspace.innerHTML = `<label>Choose an area or neighborhood<select id="place-select">${pageOptions}</select></label><h2>${escape(page.name)}</h2>
+    <section><h3>Landing-page content</h3><form id="place-form"><p><strong>Page name:</strong> ${escape(page.name)} <span class="hint">(set by the filter taxonomy)</span></p><label>Short tile description (110 characters maximum)<input name="shortDescription" maxlength="110" value="${escape(page.shortDescription)}" required></label>${field("General introduction", "overview", page.overview, "textarea")}<label>Landing-page image<select name="imagePath"><option value="">Choose automatically from a child park</option>${imagePaths.map((path) => `<option value="${escape(path)}" ${path === page.imagePath ? "selected" : ""}>${escape(path)}</option>`).join("")}</select></label><label>Wiki sources — one per line as Title | https://address<textarea name="sources" required>${escape(sources)}</textarea></label>
+    <fieldset><legend>Optional current alert</legend><label class="check"><input type="checkbox" name="alertActive" ${alert.active ? "checked" : ""}> Show this alert</label>${field("Alert title", "alertTitle", alert.title)}${field("Alert body", "alertBody", alert.body, "textarea")}<label>Expiration date (optional)<input type="date" name="alertExpiresOn" value="${escape(alert.expiresOn)}"></label><label>More information URL (optional)<input type="url" name="alertUrl" value="${escape(alert.url)}"></label>${field("URL display text (optional)", "alertUrlText", alert.urlText)}</fieldset>
+    <fieldset><legend>${page.type === "area" ? "Neighborhood tiles" : "Park tiles"}</legend><p class="hint">Move tiles to set their order. Hidden tiles remain editable but do not appear on the live landing page.</p><div id="place-children"></div></fieldset><button>Save landing page</button></form></section>`;
+  const renderChildren = () => {
+    const container = document.querySelector("#place-children");
+    container.innerHTML = placeChildren.length ? placeChildren.map((child, index) => `<div class="tile-editor" data-index="${index}"><strong>${escape(child.name)}</strong><label class="check"><input type="checkbox" class="tile-visible" ${child.visible ? "checked" : ""}> Visible</label><div class="actions"><button type="button" class="secondary tile-move" data-offset="-1" ${index === 0 ? "disabled" : ""}>↑ Move up</button><button type="button" class="secondary tile-move" data-offset="1" ${index === placeChildren.length - 1 ? "disabled" : ""}>↓ Move down</button></div></div>`).join("") : "<p>No neighborhood filters belong to this area, so its park destinations are shown directly.</p>";
+    container.querySelectorAll(".tile-visible").forEach((input) => input.addEventListener("change", () => { placeChildren[Number(input.closest(".tile-editor").dataset.index)].visible = input.checked; }));
+    container.querySelectorAll(".tile-move").forEach((button) => button.addEventListener("click", () => { const index = Number(button.closest(".tile-editor").dataset.index), target = index + Number(button.dataset.offset); [placeChildren[index], placeChildren[target]] = [placeChildren[target], placeChildren[index]]; renderChildren(); container.querySelector(`[data-index="${target}"] .tile-move`)?.focus(); }));
+  };
+  renderChildren();
+  document.querySelector("#place-select").addEventListener("change", (event) => { placeKey = event.target.value; renderPlacePages(); });
+  document.querySelector("#place-form").addEventListener("submit", catchErrors(async (event) => { const values = Object.fromEntries(new FormData(event.target)); await save("/api/place-pages", { ...values, type: page.type, id: page.id, alertActive: event.target.elements.alertActive.checked, children: placeChildren.map(({ id, visible }) => ({ id, visible })) }); renderPlacePages(); }));
+}
 document.querySelector("#parks-tab").addEventListener("click", renderPark);
+document.querySelector("#places-tab").addEventListener("click", renderPlacePages);
 document.querySelector("#blogs-tab").addEventListener("click", renderBlogs);
 try { await load(); renderPark(); message(`Loaded ${state.parks.length} park pages and ${state.images.length} photographs. No server credentials are exposed to this editor.`); } catch (error) { message(error.message, true); }

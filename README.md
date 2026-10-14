@@ -48,22 +48,31 @@ individual static pages during the next build.
 - 198 destinations with approved evergreen narrative records; the broader
   enriched total also includes reviewed facility-directory features
 - 3,314 transit stops and stations across 85 routes
-- 70 approved images across 38 destinations, with a generic regional
+- 80 approved images across 42 destinations, with a generic regional
   photograph used elsewhere rather than an unverified location image
 - 2 generated editorial illustrations supporting the programs and reservations
   guide
 - Official park-property area available for all 249 public destinations
-- 124 passing automated tests, plus a successful TypeScript check and static
+- 133 passing automated tests, plus a successful TypeScript check and static
   production build
 
 ## Run locally
 
 For local editing, run `npm run admin` with Node.js 24 and open
-`http://127.0.0.1:4180`. Manage notices, all cataloged photos, Blob uploads,
-and Markdown blog posts without exposing editing on the live site. Saves
+`http://127.0.0.1:4180`. Manage notices, reviewed map-position overrides, all
+cataloged photos, area and neighborhood landing pages, Blob uploads, and
+Markdown blog posts without exposing editing on the live site. Saves
 update project files immediately; publishing still requires building and
 deploying. See [local editor instructions](docs/local-editor.md) for backups,
 expiration dates, and image rights.
+
+The **Areas** navigation section provides static landing pages for every
+populated area and neighborhood in the Explore filters. Area pages lead to
+neighborhoods, and neighborhood pages lead to every matching park. Park-page
+breadcrumbs retain that area and neighborhood path; direct park links use the
+first valid source-ordered neighborhood path. Brief
+geographic context is paraphrased from linked Wikipedia or LocalWiki pages;
+these project browsing groups are not presented as official boundaries.
 
 Optional park-page notices are configured separately from evergreen content;
 see [park alerts](docs/park-alerts.md). Lafayette Park currently shows a clearly
@@ -171,7 +180,13 @@ null-island, or seriously displaced point is replaced with a deterministic
 point inside that geometry and recorded under `coordinateCorrections` in
 `data/normalized/normalization-report.json`. If neither form of evidence is
 usable, the destination receives no map or directions links. The application
-does not use an undocumented hand-entered coordinate.
+also supports documented, reviewed corrections in
+[`data/normalization/overrides.json`](data/normalization/overrides.json) for
+cases where a technically valid source point is not a useful public map
+marker. Each manual point requires evidence, a reason, a reviewer, and a review
+date; the rejected source point remains in the normalization audit trail. See
+[`docs/coordinate-overrides.md`](docs/coordinate-overrides.md) for the entry
+format and rebuild procedure.
 
 Refresh scheduled regional transit data with:
 

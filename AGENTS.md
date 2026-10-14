@@ -37,6 +37,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   decisions. If verification methods disagree, report the uncertainty and do
   not alter a process until its identity is established.
 
+## npm command ownership
+
+- The user owns all npm command execution for this project. Do not run `npm`,
+  `npx`, or bypass an npm script by invoking its underlying Node command.
+- When an npm-backed check, build, import, generation step, or dependency task
+  is needed, provide the exact command for the user to run and wait for the
+  resulting output before treating that step as complete.
+- Read-only inspection and file editing do not authorize npm command execution.
+
 ## Location rename behavior
 
 - Treat the reviewed source-data name as the default public name. If the user

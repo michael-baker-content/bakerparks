@@ -5,6 +5,7 @@ import { useRef } from "react";
 
 const links = [
   { href: "/explore/", label: "Explore" },
+  { href: "/areas/", label: "Areas" },
   { href: "/programs-and-reservations/", label: "Programs & reservations" },
   { href: "/#activities", label: "Activities" },
   { href: "/blog/", label: "Blog" },

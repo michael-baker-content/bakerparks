@@ -8745,9 +8745,9 @@
         "acres": 11.78006227,
         "squareFeet": 513141.5649618,
         "displayPoint": {
-          "latitude": 37.73366807,
-          "longitude": -122.37378414,
-          "precision": "source-point"
+          "latitude": 37.7341538,
+          "longitude": -122.3759418,
+          "precision": "reviewed-manual-point"
         },
         "coverage": "open-data-only"
       }

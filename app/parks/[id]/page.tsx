@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BackToResults } from "../../../components/BackToResults";
+import { ParkBreadcrumbs } from "../../../components/ParkBreadcrumbs";
 import { DestinationMap } from "../../../components/DestinationMap";
 import { DestinationGallery } from "../../../components/DestinationGallery";
 import { ParkAlert } from "../../../components/ParkAlert";
@@ -21,6 +22,7 @@ import content from "../../../data/presentation/ui-content.json";
 import sourceRegistry from "../../../data/sources.json";
 import normalizationReport from "../../../data/normalized/normalization-report.json";
 import transitDocument from "../../../data/normalized/transit.json";
+import { getParkBreadcrumbPaths } from "../../../src/lib/place-pages.js";
 
 type Destination = (typeof destinationsDocument.records)[number];
 type Amenity = { label: string; category: string; quantity: number | null; quantityStatus: string };
@@ -73,6 +75,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ id
   const parkNotice = getActiveParkNotice(parkAlerts, destination.id);
   const nearby = nearbyDestinations(destinationsDocument.records, destination.id);
   const transit = nearbyTransit(transitDocument, destination.displayPoint);
+  const breadcrumbPaths = getParkBreadcrumbPaths(destination.id);
   const pageLinks = [
     evergreen ? { id: "about", label: "About" } : null,
     parkNotice ? { id: "park-notice", label: "Park notice" } : null,
@@ -84,8 +87,8 @@ export default async function DestinationPage({ params }: { params: Promise<{ id
     { id: "official", label: "Official information" },
     nearby.length ? { id: "nearby", label: "Nearby places" } : null
   ].filter((item): item is { id: string; label: string } => Boolean(item));
-  return <div className="app-destination-shell"><Suspense fallback={null}><BackToResults /></Suspense><article className="app-destination">
-    <header><p className="app-eyebrow">{destination.placeTypes.join(" · ")}</p><h1>{destination.publicName}</h1><p className="app-location">{[destination.neighborhood, destination.address].filter(Boolean).join(" · ")}</p></header>
+  return <div className="app-destination-shell"><Suspense fallback={null}><BackToResults /></Suspense><Suspense fallback={null}><ParkBreadcrumbs parkName={destination.publicName} paths={breadcrumbPaths} /></Suspense><article className="app-destination">
+    <header><p className="app-eyebrow">{destination.placeTypes.join(" · ")}</p><h1>{destination.publicName}</h1>{destination.address ? <p className="app-location">{destination.address}</p> : null}</header>
     <nav className="app-page-nav" aria-label="On this page">
       <div className="app-page-nav__desktop"><strong>On this page</strong><ul>{pageLinks.map((link) => <li key={link.id}><a href={`#${link.id}`}>{link.label}</a></li>)}</ul></div>
       <details className="app-page-nav__mobile"><summary><span aria-hidden="true">☰</span> On this page</summary><ul>{pageLinks.map((link) => <li key={link.id}><a href={`#${link.id}`}>{link.label}</a></li>)}</ul></details>

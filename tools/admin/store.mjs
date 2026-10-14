@@ -5,9 +5,11 @@ import { createHash, randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { put } from "@vercel/blob";
 import { validateMediaManifest } from "../../scripts/validate-media-manifest.mjs";
+import { validateCoordinateOverrides } from "../../scripts/normalize.mjs";
 import { nearbyTransit } from "../../src/lib/nearby-transit.js";
+import { pageAdminState, validatePlacePages } from "../../src/lib/place-pages.js";
 
-const files = { media: "data/media/media-manifest.json", blob: "data/media/blob-assets.json", notices: "data/content/park-alerts.json", parks: "data/presentation/generated/destinations.json", evergreen: "data/content/evergreen-content.json" };
+const files = { media: "data/media/media-manifest.json", blob: "data/media/blob-assets.json", notices: "data/content/park-alerts.json", parks: "data/presentation/generated/destinations.json", evergreen: "data/content/evergreen-content.json", overrides: "data/normalization/overrides.json", placePages: "data/content/place-pages.json" };
 const text = (value, label) => { if (typeof value !== "string" || !value.trim()) throw new Error(`${label} is required.`); return value.trim(); };
 const date = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
 export function validateNotice(value, ids) {
@@ -22,6 +24,21 @@ export function validateNotice(value, ids) {
     if (!["http:", "https:"].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error("Notice URL must be an HTTP or HTTPS web address without embedded credentials.");
   }
   return { destinationId: value.destinationId, active: value.active, title: value.active ? text(value.title, "Notice title") : String(value.title ?? "").trim(), body: value.active ? text(value.body, "Notice body") : String(value.body ?? "").trim(), ...(value.expiresOn ? { expiresOn: value.expiresOn } : {}), ...(url ? { url, ...(urlText ? { urlText } : {}) } : {}) };
+}
+
+export function coordinatesFromGoogleMapsUrl(value) {
+  let url;
+  try { url = new URL(String(value ?? "").trim()); } catch { throw new Error("Enter a complete Google Maps web address."); }
+  if (url.protocol !== "https:" || !(url.hostname === "google.com" || url.hostname.endsWith(".google.com"))) throw new Error("Use a complete HTTPS Google Maps link. Short maps.app.goo.gl links must be expanded first.");
+  const decoded = decodeURIComponent(url.href);
+  const placePin = decoded.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+  const viewport = decoded.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,|$)/);
+  const query = ["query", "destination", "q"].map((name) => url.searchParams.get(name)).filter(Boolean).map((item) => item.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/)).find(Boolean);
+  const match = placePin ?? viewport ?? query;
+  if (!match) throw new Error("This link does not contain coordinates. Open the Google Maps place, copy its full browser address, and try again.");
+  const latitude = Number(match[1]), longitude = Number(match[2]);
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180 || (latitude === 0 && longitude === 0)) throw new Error("The Google Maps link contains invalid coordinates.");
+  return { latitude, longitude, evidenceUrl: url.toString() };
 }
 
 export async function openStore(root) {
@@ -53,7 +70,7 @@ export async function openStore(root) {
     state: async () => {
       const parks = (await read(files.parks)).records;
       const transit = await read("data/normalized/transit.json");
-      return { parks, nearbyTransit: Object.fromEntries(parks.map((park) => [park.id, nearbyTransit(transit, park.displayPoint)])), evergreen: (await read(files.evergreen)).records, images: (await read(files.media)).images, blobAssets: (await read(files.blob)).assets, notices: (await read(files.notices)).alerts, blogs: await blogs() };
+      return { parks, nearbyTransit: Object.fromEntries(parks.map((park) => [park.id, nearbyTransit(transit, park.displayPoint)])), evergreen: (await read(files.evergreen)).records, images: (await read(files.media)).images, blobAssets: (await read(files.blob)).assets, notices: (await read(files.notices)).alerts, coordinateOverrides: (await read(files.overrides)).overrides, placePages: pageAdminState(await read(files.placePages)), blogs: await blogs() };
     },
     async saveNotice(value) {
       const notice = validateNotice(value, ids);
@@ -61,6 +78,52 @@ export async function openStore(root) {
       document.alerts = [...document.alerts.filter((item) => item.destinationId !== notice.destinationId), notice];
       await jsonSave(files.notices, document);
       recordEdit("notice", notice.destinationId, notice);
+    },
+    async saveCoordinateOverride(value) {
+      if (!ids.has(value.destinationId)) throw new Error("Unknown park.");
+      const park = (await read(files.parks)).records.find((item) => item.id === value.destinationId);
+      const entityType = park.principalFacilityIds?.[0] ? "facility" : "property";
+      const entityId = park.principalFacilityIds?.[0] ?? park.propertyIds?.[0];
+      if (!entityId) throw new Error("This park does not have a source entity that can receive a map override.");
+      const { latitude, longitude, evidenceUrl } = coordinatesFromGoogleMapsUrl(value.evidenceUrl);
+      const override = {
+        id: `${entityType}-${entityId}-display-point`,
+        entityType,
+        entityId,
+        displayPoint: { latitude, longitude },
+        evidenceUrl,
+        reason: text(value.reason, "Reason for the override"),
+        reviewedAt: new Date().toISOString().slice(0, 10),
+        reviewedBy: text(value.reviewedBy, "Reviewer")
+      };
+      const document = await read(files.overrides);
+      document.overrides = [...document.overrides.filter((item) => !(item.entityType === entityType && item.entityId === entityId)), override];
+      document.overrides = validateCoordinateOverrides(document);
+      await jsonSave(files.overrides, document);
+      recordEdit("coordinate-override", override.id, override);
+      return override;
+    },
+    async savePlacePage(value) {
+      const document = await read(files.placePages);
+      const current = document.records.find((item) => item.type === value.type && item.id === value.id);
+      if (!current) throw new Error("Unknown area or neighborhood page.");
+      const children = pageAdminState(document).find((item) => item.type === value.type && item.id === value.id).children;
+      const childIds = new Set(children.map((item) => item.id));
+      if (!Array.isArray(value.children) || value.children.length !== childIds.size || value.children.some((item) => !childIds.has(item.id)) || new Set(value.children.map((item) => item.id)).size !== childIds.size) throw new Error("Child tile changes are incomplete or invalid.");
+      const sources = String(value.sources ?? "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((line) => {
+        const separator = line.indexOf(" | ");
+        if (separator < 1) throw new Error("Enter each wiki source as Title | https://address.");
+        return { title: line.slice(0, separator).trim(), url: line.slice(separator + 3).trim() };
+      });
+      const alertValue = validateNotice({ destinationId: `${current.type}-${current.id}`, active: Boolean(value.alertActive), title: value.alertTitle, body: value.alertBody, expiresOn: value.alertExpiresOn, url: value.alertUrl, urlText: value.alertUrlText }, new Set([`${current.type}-${current.id}`]));
+      const updated = { ...current, shortDescription: text(value.shortDescription, "Short description"), overview: text(value.overview, "Overview"), imagePath: String(value.imagePath ?? "").trim(), sources, childOrder: value.children.map((item) => item.id), hiddenChildIds: value.children.filter((item) => !item.visible).map((item) => item.id), ...(alertValue.active || alertValue.title || alertValue.body || alertValue.expiresOn || alertValue.url ? { alert: alertValue } : { alert: undefined }) };
+      document.records = document.records.map((item) => item.type === current.type && item.id === current.id ? updated : item);
+      const cleaned = JSON.parse(JSON.stringify(document));
+      const errors = validatePlacePages(cleaned);
+      if (errors.length) throw new Error(errors.join("\n"));
+      await jsonSave(files.placePages, cleaned);
+      recordEdit("place-page", `${current.type}:${current.id}`, updated);
+      return updated;
     },
     async saveImages(value) {
       if (!ids.has(value.destinationId) || !Array.isArray(value.images)) throw new Error("Invalid park image collection.");

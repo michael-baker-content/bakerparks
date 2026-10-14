@@ -19,6 +19,17 @@ no account/login system.
   same tab and accept HTTP/HTTPS addresses without embedded credentials. A date
   remains valid through the end of that day in San Francisco. Public notices
   check expiration on page load and every minute, even on the static site.
+- Reviewed map positions: paste a full Google Maps place link, explain why the
+  imported point is unsuitable, and identify the reviewer. The editor extracts
+  the place pin coordinates in preference to the map viewport coordinates and
+  stores the evidence in `data/normalization/overrides.json`. Short
+  `maps.app.goo.gl` links must first be expanded in a browser.
+- Area and neighborhood landing pages: edit the concise introduction, short
+  tile description, linked wiki sources, and representative image; create an
+  optional expiring alert; and reorder or hide child tiles. Page names and
+  membership remain governed by the populated Explore filter taxonomy. Hidden
+  children stay available in the editor. A neighborhood with no park records
+  is never published or offered as a filter.
 - All cataloged photographs, including original and second-party images:
   captions, alt text, creator/attribution, visibility, gallery order, and
   removal from the catalog. Existing external licenses are read-only;
@@ -26,8 +37,9 @@ no account/login system.
 - Blog posts: one Markdown file per post, including existing cover/gallery
   frontmatter. Full schema validation happens during the production build.
 
-Official inventory, evergreen context, coordinates, sources, and nearby
-transit are read-only. The Lafayette placeholder notice remains the test case;
+Official park inventory, park evergreen context, source coordinates, and nearby
+transit are read-only. Reviewed public map-position overrides are editable.
+The Lafayette placeholder notice remains the test case;
 do not mistake its text for an actual closure.
 
 ## Saving and publishing
@@ -47,6 +59,11 @@ blog cover uses the default regional photograph. Removing an image deletes its
 media-manifest entry after confirmation but retains its Blob registry entry and
 public Blob file for recovery. The editor blocks removal while a blog post
 still references that image path.
+
+After saving a map-position override, run `npm run build:data` before testing
+or building the site. This reapplies normalization and updates destination,
+search, directions, map, transit-distance, and other proximity data from the
+same reviewed point. See [reviewed coordinate overrides](coordinate-overrides.md).
 
 The local editor is the sole photo metadata review workflow. The former CSV
 and its scripts have been retired. All 40 CSV entries matched the current

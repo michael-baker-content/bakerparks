@@ -25,6 +25,14 @@
       "expiresOn": "2028-07-01",
       "url": "https://sfrecpark.org/1166/Portsmouth-Square-Improvement-Project",
       "urlText": "Portsmouth Square Improvement Project"
+    },
+    {
+      "destinationId": "india-basin-shoreline-park",
+      "active": true,
+      "title": "India Basin Shoreline Park | In Construction",
+      "body": "The proposed plans for IBSP include major site regrading to ease steep slopes to allow for more site access and create additional opportunities for shoreline habitat. The concept plans would maintain and expand the current active recreational amenities and increases opportunities to gather, recreate and play.",
+      "expiresOn": "2028-05-31",
+      "url": "https://sfrecpark.org/1153/India-Basin-Waterfront-Park"
     }
   ]
 }

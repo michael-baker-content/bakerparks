@@ -15,6 +15,12 @@ function contrast(first, second) {
   return (values[0] + 0.05) / (values[1] + 0.05);
 }
 
+function blend(foreground, background, opacity) {
+  const foregroundChannels = foreground.match(/[a-f\d]{2}/gi).map((value) => Number.parseInt(value, 16));
+  const backgroundChannels = background.match(/[a-f\d]{2}/gi).map((value) => Number.parseInt(value, 16));
+  return `#${foregroundChannels.map((value, index) => Math.round(value * opacity + backgroundChannels[index] * (1 - opacity)).toString(16).padStart(2, "0")).join("")}`;
+}
+
 test("the shared layout provides language, landmarks, and a skip target", async () => {
   const layout = await readFile(new URL("app/layout.tsx", root), "utf8");
 
@@ -48,6 +54,13 @@ test("the core text palette retains WCAG AA contrast", () => {
   assert.ok(contrast("#1b5e3b", white) >= 4.5, "green text on white");
   assert.ok(contrast("#123f2a", white) >= 4.5, "dark green text on white");
   assert.ok(contrast(white, "#123f2a") >= 4.5, "white text on dark green");
+});
+
+test("the reduced hero overlay retains AA contrast over the brightest possible image pixel", async () => {
+  const styles = await readFile(new URL("app/styles.css", root), "utf8");
+  const darkestRequiredHeroBackground = blend("#0a1f16", "#ffffff", 0.62);
+  assert.ok(contrast("#ffffff", darkestRequiredHeroBackground) >= 4.5, "white hero text over a white image pixel");
+  assert.match(styles, /app-hero--image[^}]*rgb\(10 31 22 \/ 62%\) 49rem/);
 });
 
 test("button interaction states retain readable text and explicit styling", async () => {

@@ -2946,6 +2946,27 @@
   "coordinateCorrections": {
     "properties": [
       {
+        "id": "48",
+        "name": "India Basin - Shoreline Park",
+        "reason": "reviewed-manual-override",
+        "sourcePoint": {
+          "latitude": 37.73366807,
+          "longitude": -122.37378414
+        },
+        "replacementPoint": {
+          "latitude": 37.7341538,
+          "longitude": -122.3759418,
+          "precision": "reviewed-manual-point"
+        },
+        "override": {
+          "id": "property-48-display-point",
+          "evidenceUrl": "https://www.google.com/maps/place/India+Basin+Shoreline+Park/@37.7341538,-122.3785221,17z/data=!3m1!4b1!4m6!3m5!1s0x808f7f6bff0d12bb:0xea07aa99f617ba3e!8m2!3d37.7341538!4d-122.3759418!16s%2Fg%2F1td5rhvg?entry=ttu",
+          "reason": "The City source point falls in the water-facing portion of a multipart property geometry and is not a useful public map marker. The reviewed Google Maps place pin identifies the park's land-based location.",
+          "reviewedAt": "2026-09-24",
+          "reviewedBy": "project-owner"
+        }
+      },
+      {
         "id": "957481",
         "name": "Panorama Park",
         "reason": "source-point-outside-shape",

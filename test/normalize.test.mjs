@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { chooseCanonical, fieldConflicts, groupById, isUsableCoordinatePair, normalizeDatasets } from "../scripts/normalize.mjs";
+import { chooseCanonical, fieldConflicts, groupById, isUsableCoordinatePair, normalizeDatasets, validateCoordinateOverrides } from "../scripts/normalize.mjs";
 
 test("canonical selection prefers the most familiar repeated source value", () => {
   const rows = [{ name: "Rec Center" }, { name: "Rec Center" }, { name: "Recreation Facility" }];
@@ -82,4 +82,42 @@ test("normalization retains a reasonable source label point near a complex bound
   });
   assert.equal(result.properties[0].displayPoint.precision, "source-point");
   assert.equal(result.properties[0].coordinateReview, undefined);
+});
+
+test("a reviewed coordinate override replaces the source point and remains auditable", () => {
+  const override = {
+    id: "property-P1-display-point", entityType: "property", entityId: "P1",
+    displayPoint: { latitude: 37.7341538, longitude: -122.3759418 },
+    evidenceUrl: "https://www.google.com/maps/place/Example",
+    reason: "Reviewed public map pin better represents the land entrance.",
+    reviewedAt: "2026-09-24", reviewedBy: "owner"
+  };
+  const result = normalizeDatasets({
+    properties: [{ data: { objectid: "1", property_id: "P1", property_name: "Park", latitude: "37.73366807", longitude: "-122.37378414" } }],
+    facilities: [{ data: { objectid: "2", facility_id: "F1", facility_name: "Park Facility", property_id: "P1" } }],
+    functionalAreas: [], assets: [],
+    taxonomy: { facilityTypes: {}, functionalAreaTypes: {}, assetTypes: {} },
+    overrides: { schemaVersion: 1, overrides: [override] }
+  });
+  assert.deepEqual(result.properties[0].displayPoint, { latitude: 37.7341538, longitude: -122.3759418, precision: "reviewed-manual-point" });
+  assert.deepEqual(result.properties[0].coordinateReview.sourcePoint, { latitude: 37.73366807, longitude: -122.37378414 });
+  assert.equal(result.properties[0].coordinateReview.override.evidenceUrl, override.evidenceUrl);
+  assert.equal(result.facilities[0].displayPoint.precision, "inherited-parent-point");
+  assert.equal(result.facilities[0].displayPoint.longitude, override.displayPoint.longitude);
+  assert.equal(result.report.coordinateCorrections.properties[0].reason, "reviewed-manual-override");
+});
+
+test("coordinate overrides fail closed when evidence or entities are invalid", () => {
+  assert.throws(() => validateCoordinateOverrides({ schemaVersion: 1, overrides: [{
+    id: "bad", entityType: "property", entityId: "P1", displayPoint: { latitude: 0, longitude: 0 },
+    evidenceUrl: "http://example.test", reason: "Bad", reviewedAt: "2026-09-24", reviewedBy: "owner"
+  }] }));
+  assert.throws(() => normalizeDatasets({
+    properties: [], facilities: [], functionalAreas: [], assets: [],
+    taxonomy: { facilityTypes: {}, functionalAreaTypes: {}, assetTypes: {} },
+    overrides: { schemaVersion: 1, overrides: [{
+      id: "missing", entityType: "property", entityId: "P1", displayPoint: { latitude: 37.7, longitude: -122.4 },
+      evidenceUrl: "https://example.test/", reason: "Reviewed correction", reviewedAt: "2026-09-24", reviewedBy: "owner"
+    }] }
+  }), /was not found/);
 });
