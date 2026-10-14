@@ -11,9 +11,9 @@ type Tile = { id: string; name: string; shortDescription: string; href: string; 
 type Page = { id: string; name: string; shortDescription: string; overview: string; sources: Source[]; image?: ImageRecord; alert?: Alert };
 
 const placeholder: ImageRecord = {
-  localPath: "/media/park-image-placeholder.png", width: 2048, height: 1536,
-  alt: "Wide lawn at Fort Mason Park with trees, San Francisco Bay, and the Golden Gate Bridge in the distance.",
-  attribution: "Photo by Michael Baker", filePageUrl: "", licenseId: "CC-BY-4.0", licenseUrl: "https://creativecommons.org/licenses/by/4.0/"
+  localPath: "/media/park-image-placeholder.png", width: 1536, height: 1024,
+  alt: "Illustration of a landscaped hillside park with a curving path, trees, benches, and bay water under coastal fog.",
+  attribution: "Placeholder illustration", filePageUrl: "", licenseId: "Project asset", licenseUrl: "/about/"
 };
 
 function Picture({ image, sizes }: { image?: ImageRecord; sizes: string }) {

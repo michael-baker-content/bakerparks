@@ -2,6 +2,19 @@
 
 Living source document for a future PowerPoint or PDF case study.  
 
+## Session update: distinguishing photography from placeholders
+
+- Restored the generated San Francisco park illustration as the shared fallback
+  for destinations, area and neighborhood tiles, the About page, and blog cards
+  that do not have an approved image. A real photograph of an unrelated park
+  could otherwise imply that it documented the place being described.
+- Retained the original Fort Mason photograph as the homepage hero, where it
+  establishes a regional sense of place without standing in for a named
+  destination. The two roles now use separate media identifiers even though
+  both images remain Blob-delivered.
+- Preserved the existing stable placeholder path for the illustration so
+  coverage reports and destination fallbacks require no migration.
+
 ## Session update: reviewed coordinate overrides
 
 - Added a fail-closed manual correction layer for the narrow case where an

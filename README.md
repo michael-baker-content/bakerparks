@@ -138,7 +138,7 @@ removal in the [local editor](docs/local-editor.md). Removing an entry retains
 its public Blob file for recovery. All cataloged photographs appear in the
 editor, including new uploads. The CSV review workflow has been retired.
 
-Blog posts use the Fort Mason regional park photograph by default. To choose
+Blog posts use the generic San Francisco park illustration by default. To choose
 another reviewed Blob asset for a post card, add its stable registry path and
 meaningful alt text to the Markdown frontmatter:
 

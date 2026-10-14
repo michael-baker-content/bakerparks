@@ -59,6 +59,7 @@ test("every site image is backed by the committed Blob registry", () => {
   const siteImagePaths = new Set([
     ...manifest.images.map((image) => image.localPath),
     "/media/park-image-placeholder.png",
+    "/media/fort-mason-homepage-hero.jpg",
     "/media/programs-pickleball-watercolor.jpg",
     "/media/programs-youth-gardening-watercolor.jpg",
   ]);

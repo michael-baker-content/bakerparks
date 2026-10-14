@@ -19,6 +19,22 @@ test("empty neighborhoods never become live landing pages or area tiles", () => 
   }
 });
 
+test("automatic landing-page images favor significant parks over manifest order", () => {
+  const sunset = getAreas().find((item) => item.id === "sunset-westside");
+  assert.equal(sunset.image.destinationId, "golden-gate-park");
+
+  const pacificHeights = getNeighborhoods().find((item) => item.id === "pacific-heights");
+  assert.equal(pacificHeights.image.destinationId, "alta-plaza-park");
+});
+
+test("automatic landing-page images omit parks with active notices", () => {
+  const downtown = getAreas().find((item) => item.id === "downtown-chinatown-soma");
+  assert.notEqual(downtown.image.destinationId, "sue-bierman-park");
+
+  const pacificHeights = getNeighborhoods().find((item) => item.id === "pacific-heights");
+  assert.notEqual(pacificHeights.image.destinationId, "lafayette-park");
+});
+
 test("the outside-San-Francisco area falls back to its parks without inventing neighborhoods", () => {
   const area = getAreas().find((item) => item.id === "outside-san-francisco");
   assert.deepEqual(area.neighborhoods, []);

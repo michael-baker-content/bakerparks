@@ -3,9 +3,31 @@ import search from "../../data/search/generated/search-index.json" with { type: 
 import content from "../../data/content/place-pages.json" with { type: "json" };
 import destinations from "../../data/presentation/generated/destinations.json" with { type: "json" };
 import media from "../../data/media/media-manifest.json" with { type: "json" };
+import parkAlerts from "../../data/content/park-alerts.json" with { type: "json" };
+import { getActiveParkNotice } from "./park-notices.js";
 
 const destinationsById = new Map(destinations.records.map((record) => [record.id, record]));
 const visibleImages = media.images.filter((image) => image.visible !== false).sort((a, b) => a.position - b.position);
+const firstImageByDestination = new Map();
+for (const image of visibleImages) if (!firstImageByDestination.has(image.destinationId)) firstImageByDestination.set(image.destinationId, image);
+const noticedDestinationIds = new Set(parkAlerts.alerts.filter((notice) => getActiveParkNotice({ alerts: [notice] }, notice.destinationId)).map((notice) => notice.destinationId));
+
+function destinationSignificance(destinationId) {
+  const destination = destinationsById.get(destinationId);
+  if (!destination) return 0;
+  const amenityCount = destination.amenities?.length ?? 0;
+  const acres = Math.max(0, destination.acres ?? 0);
+  // Logarithmic acreage rewards meaningful park scale without allowing the
+  // largest properties to overwhelm the useful signal from recorded features.
+  return amenityCount + Math.log2(acres + 1) * 8;
+}
+
+function representativeImage(destinationIds) {
+  return destinationIds
+    .filter((id) => firstImageByDestination.has(id) && !noticedDestinationIds.has(id))
+    .sort((a, b) => destinationSignificance(b) - destinationSignificance(a) || a.localeCompare(b))
+    .map((id) => firstImageByDestination.get(id))[0];
+}
 
 function ordered(items, record) {
   const positions = new Map((record.childOrder ?? []).map((id, index) => [id, index]));
@@ -15,7 +37,7 @@ function ordered(items, record) {
 
 export function imageForPage(record, destinationIds = []) {
   if (record.imagePath) return visibleImages.find((image) => image.localPath === record.imagePath);
-  return visibleImages.find((image) => destinationIds.includes(image.destinationId));
+  return representativeImage(destinationIds);
 }
 
 export function getNeighborhoods(document = content) {
@@ -52,7 +74,7 @@ export function getAreaForNeighborhood(neighborhoodId, document = content) {
 export function getNeighborhood(id, document = content) {
   const neighborhood = getNeighborhoods(document).find((item) => item.id === id);
   if (!neighborhood) return undefined;
-  const parks = neighborhood.destinationIds.map((id) => destinationsById.get(id)).filter(Boolean).map((park) => ({ ...park, name: park.publicName, image: visibleImages.find((image) => image.destinationId === park.id) }));
+  const parks = neighborhood.destinationIds.map((id) => destinationsById.get(id)).filter(Boolean).map((park) => ({ ...park, name: park.publicName, image: firstImageByDestination.get(park.id) }));
   return { ...neighborhood, parks: ordered(parks, neighborhood) };
 }
 

@@ -730,6 +730,25 @@
       "variants": [
         {
           "width": 640,
+          "height": 427,
+          "bytes": 57320,
+          "url": "https://yfhyoklpjmg7y4gg.public.blob.vercel-storage.com/media/park-image-placeholder/c3fc391cfb71/640.webp",
+          "pathname": "media/park-image-placeholder/c3fc391cfb71/640.webp"
+        },
+        {
+          "width": 1280,
+          "height": 853,
+          "bytes": 167068,
+          "url": "https://yfhyoklpjmg7y4gg.public.blob.vercel-storage.com/media/park-image-placeholder/c3fc391cfb71/1280.webp",
+          "pathname": "media/park-image-placeholder/c3fc391cfb71/1280.webp"
+        }
+      ]
+    },
+    {
+      "localPath": "/media/fort-mason-homepage-hero.jpg",
+      "variants": [
+        {
+          "width": 640,
           "height": 480,
           "bytes": 55630,
           "url": "https://yfhyoklpjmg7y4gg.public.blob.vercel-storage.com/media/park-image-placeholder/f812c8e2b06a/640.webp",
