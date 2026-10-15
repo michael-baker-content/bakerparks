@@ -20,6 +20,20 @@ test("published media requires attribution and an approved reusable license", ()
   assert.ok(errors.some((item) => item.includes("license")));
 });
 
+test("a destination can have no more than one visible featured image", () => {
+  const destinationImages = manifest.images.filter((image) => image.destinationId === manifest.images[0].destinationId);
+  assert.ok(destinationImages.length >= 2);
+  const invalid = structuredClone(manifest);
+  for (const path of destinationImages.slice(0, 2).map((image) => image.localPath)) invalid.images.find((image) => image.localPath === path).featured = true;
+  assert.ok(validateMediaManifest(invalid).some((error) => /only one featured image/.test(error)));
+
+  const hidden = structuredClone(manifest);
+  const target = hidden.images.find((image) => image.localPath === destinationImages[0].localPath);
+  target.featured = true;
+  target.visible = false;
+  assert.ok(validateMediaManifest(hidden).some((error) => /must be visible/.test(error)));
+});
+
 test("LocalWiki media remains bound to reviewed LocalWiki source records", () => {
   const localwikiImage = manifest.images.find((image) => image.sourceType === "localwiki");
   assert.ok(localwikiImage);

@@ -1,22 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, memo, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, memo, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import destinationsDocument from "../data/presentation/generated/destinations.json";
 import content from "../data/presentation/ui-content.json";
 import index from "../data/search/generated/search-index.json";
 import configuration from "../data/search/search-filters.json";
+import mediaManifest from "../data/media/media-manifest.json";
 import { explainMatch, filterAndRank } from "../src/lib/search.js";
 import { readState, stateFromForm, stateParams, stateUrl, stateUrlWithout } from "../src/lib/url-state.js";
 import { acreageText, amenityQuantityText } from "../src/lib/display-format.js";
 import { resultFocusId, resultReturnPath } from "../src/lib/result-focus.js";
 import { RESULTS_PAGE_SIZE } from "../src/lib/pagination.js";
+import { resolveMediaAsset } from "../src/lib/media-delivery.js";
+import { representativeDestinationImageMap } from "../src/lib/representative-image.js";
 import { SearchBox } from "./SearchBox";
 import { ResultsMap } from "./ResultsMap";
 
 type Destination = (typeof destinationsDocument.records)[number];
 type IndexRecord = (typeof index.records)[number];
+type MediaRecord = (typeof mediaManifest.images)[number];
+
+const resultImages = representativeDestinationImageMap(mediaManifest.images) as Map<string, MediaRecord>;
+
+function resultHref(destinationId: string, returnPath: string) {
+  const focusedReturnPath = resultReturnPath(returnPath.includes("?") ? returnPath.slice(returnPath.indexOf("?") + 1) : "", destinationId);
+  return `/parks/${destinationId}/?return=${encodeURIComponent(focusedReturnPath)}`;
+}
+
+function rememberResult(event: MouseEvent<HTMLAnchorElement>, destinationId: string, returnPath: string) {
+  if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+    window.sessionStorage.setItem("sf-parks-return-focus", destinationId);
+    window.sessionStorage.setItem("sf-parks-return-path", returnPath);
+  }
+}
 
 function CheckList({ name, items, selected }: { name: string; items: Array<{ id: string; label: string; count: number; icon?: string }>; selected: string[] }) {
   return items.map((item) => <div className="usa-checkbox" key={item.id}>
@@ -38,6 +56,7 @@ function FilterPanel({ state, stateKey, expanded, overlay, panelRef, onToggle, o
     <form key={stateKey} ref={panelRef} className="app-filters" id="result-filters" action="/explore/" data-expanded={expanded} role={overlay ? "dialog" : undefined} aria-modal={overlay ? "true" : undefined} aria-labelledby="filter-panel-title" onSubmit={onSubmit}>
       {state.q && <input type="hidden" name="q" value={state.q} />}
       {state.view === "map" && <input type="hidden" name="view" value="map" />}
+      {state.layout === "photos" && <input type="hidden" name="layout" value="photos" />}
       <div className="app-filter-heading"><h2 id="filter-panel-title">Filter results</h2><button className="usa-button app-filter-close" type="button" onClick={onToggle}><span aria-hidden="true">×</span> Close</button></div>
       <details><summary>Activities</summary><fieldset className="usa-fieldset"><legend className="usa-sr-only">Activities</legend><CheckList name="activity" items={activityItems} selected={state.activity} /></fieldset></details>
       <details><summary>Amenities</summary><fieldset className="usa-fieldset"><legend className="usa-sr-only">Amenities</legend><CheckList name="amenity" items={index.facets.amenities} selected={state.amenity} /></fieldset></details>
@@ -93,14 +112,8 @@ const ResultCard = memo(function ResultCard({ destination, record, state, return
   const ordered = [...destination.amenities].sort((a, b) => matchPriority(b.label) - matchPriority(a.label));
   const amenities = ordered.slice(0, content.resultCard.visibleAmenityLimit);
   const more = destination.amenities.length - amenities.length;
-  const focusedReturnPath = resultReturnPath(returnPath.includes("?") ? returnPath.slice(returnPath.indexOf("?") + 1) : "", destination.id);
   return <article className="app-result-card">
-    <h2><Link id={resultFocusId(destination.id)} href={`/parks/${destination.id}/?return=${encodeURIComponent(focusedReturnPath)}`} onClick={(event) => {
-      if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
-        window.sessionStorage.setItem("sf-parks-return-focus", destination.id);
-        window.sessionStorage.setItem("sf-parks-return-path", returnPath);
-      }
-    }}>{destination.publicName}</Link></h2>
+    <h2><Link id={resultFocusId(destination.id)} href={resultHref(destination.id, returnPath)} onClick={(event) => rememberResult(event, destination.id, returnPath)}>{destination.publicName}</Link></h2>
     <p className="app-location">{[destination.neighborhood, destination.address].filter(Boolean).join(" · ") || content.resultCard.locationFallback}</p>
     {match.reason && <p className="app-match-label">{match.reason}{match.reason.startsWith("Matches your") ? ":" : ""}</p>}
     {(state.minAmenities > 0 || state.minAcres > 0) && <p className="app-threshold-match">{[
@@ -111,6 +124,25 @@ const ResultCard = memo(function ResultCard({ destination, record, state, return
       {amenities.map((item) => <li className={matches.has(item.label) ? "is-matched" : undefined} key={`${item.category}-${item.label}`}>{amenityQuantityText(item)}</li>)}
       {more > 0 && <li>+{more} more</li>}
     </ul>
+  </article>;
+});
+
+const ResultPhotoCard = memo(function ResultPhotoCard({ destination, record, state, returnPath }: { destination: Destination; record: IndexRecord; state: ReturnType<typeof readState>; returnPath: string }) {
+  const image = resultImages.get(destination.id);
+  const delivered = image ? resolveMediaAsset(image.localPath, image.width, image.height) : undefined;
+  const match = explainMatch(record, destination, state, configuration);
+  const gradient = [...destination.id].reduce((total, character) => total + character.charCodeAt(0), 0) % 6;
+  const href = resultHref(destination.id, returnPath);
+  return <article className="app-result-photo-card">
+    <Link className="app-result-photo-card__visual" href={href} onClick={(event) => rememberResult(event, destination.id, returnPath)}>
+      {image && delivered ? <img src={delivered.src} srcSet={delivered.srcSet} sizes="(max-width: 36rem) 100vw, (max-width: 70rem) 50vw, 33vw" width={delivered.width} height={delivered.height} alt={image.alt} loading="lazy" /> : <span className={`app-result-photo-card__placeholder app-result-photo-card__placeholder--${gradient}`}><span>No photograph available</span></span>}
+    </Link>
+    <div className="app-result-photo-card__body">
+      <h2><Link id={resultFocusId(destination.id)} href={href} onClick={(event) => rememberResult(event, destination.id, returnPath)}>{destination.publicName}</Link></h2>
+      <p className="app-location">{destination.neighborhood || destination.address || content.resultCard.locationFallback}</p>
+      {match.reason && <p className="app-match-label">{match.reason}{match.reason.startsWith("Matches your") ? ":" : ""}</p>}
+    </div>
+    {image ? <p className="app-result-photo-card__credit">{image.filePageUrl ? <a href={image.filePageUrl} rel="external">{image.attribution} <span aria-hidden="true">↗</span></a> : image.attribution} · <a href={image.licenseUrl} rel="license">{image.licenseId}</a></p> : null}
   </article>;
 });
 
@@ -131,6 +163,7 @@ export function Explorer({ mapStyleUrl }: { mapStyleUrl?: string }) {
   const shareableParams = useMemo(() => stateParams({}, state), [state]);
   const shareableQuery = shareableParams.toString();
   const returnPath = `/explore/${shareableQuery ? `?${shareableQuery}` : ""}`;
+  const archiveHref = state.neighborhood.length === 1 ? `/photos/?neighborhood=${encodeURIComponent(state.neighborhood[0])}` : state.area.length === 1 ? `/photos/?area=${encodeURIComponent(state.area[0])}` : "/photos/";
   const mapDestinations = useMemo(() => results.flatMap(({ record }: { record: IndexRecord }) => {
     const destination = destinations.get(record.id);
     return destination?.displayPoint ? [{
@@ -207,6 +240,7 @@ export function Explorer({ mapStyleUrl }: { mapStyleUrl?: string }) {
     router.push(stateUrl(nextState, state));
   }
   function sort(value: string) { router.push(stateUrl({ sort: value, page: 1 }, state), { scroll: false }); }
+  function setLayout(layout: "list" | "photos") { router.push(stateUrl({ layout }, state), { scroll: false }); }
   function nextPage() { router.push(stateUrl({ page: state.page + 1 }, state)); }
   function toggleMap() { router.push(stateUrl({ view: state.view === "map" ? "list" : "map" }, state), { scroll: false }); }
   function toggleFilters() {
@@ -224,8 +258,9 @@ export function Explorer({ mapStyleUrl }: { mapStyleUrl?: string }) {
         <div className="app-result-tools">{mapStyleUrl && <button className="usa-button usa-button--outline" type="button" aria-expanded={state.view === "map"} aria-controls="results-map-panel" onClick={toggleMap}>{state.view === "map" ? "Hide map" : "Show map"}</button>}<button ref={filterTrigger} className="usa-button usa-button--outline app-filter-toggle" type="button" aria-expanded={filtersExpanded} aria-controls="result-filters" onClick={toggleFilters}>{filtersExpanded ? "Hide filters" : "Show filters"}{selectionCount ? ` (${selectionCount})` : ""}</button></div>
       </div>
       {mapStyleUrl && state.view === "map" && <section id="results-map-panel" aria-label="Map view"><p className="usa-hint">The map shows destinations with usable listed coordinates. With no search or filters, it starts with San Francisco proper; relevant searches can expand to outlying Recreation and Parks properties. Use the complete results list below for accessible browsing.</p><ResultsMap styleUrl={mapStyleUrl} preferCoreCity={!hasSearchCriteria} destinations={mapDestinations} /></section>}
-      <div className="app-results-sort"><label className="usa-label app-sort"><span>Sort</span><select className="usa-select" value={state.sort} onChange={(event) => sort(event.target.value)}><option value="relevance">Relevance</option><option value="name">Name</option><option value="amenities">Most amenities</option></select></label></div>
-      {results.length ? <><div className="app-result-list">{visible.map(({ record }: { record: IndexRecord }) => <ResultCard key={record.id} destination={destinations.get(record.id)!} record={record} state={state} returnPath={returnPath} />)}</div>
+      <div className="app-results-viewbar"><div className="app-result-layout" role="group" aria-label="Result view"><button type="button" aria-pressed={state.layout === "list"} onClick={() => setLayout("list")}>List</button><button type="button" aria-pressed={state.layout === "photos"} onClick={() => setLayout("photos")}>Photo</button></div><label className="usa-label app-sort"><span>Sort</span><select className="usa-select" value={state.sort} onChange={(event) => sort(event.target.value)}><option value="relevance">Relevance</option><option value="name">Name</option><option value="amenities">Most amenities</option></select></label></div>
+      {state.layout === "photos" ? <p className="app-result-photo-note">Showing one representative image per destination. <Link href={archiveHref}>Browse the complete photo archive</Link>.</p> : null}
+      {results.length ? <><div className={state.layout === "photos" ? "app-result-photo-grid" : "app-result-list"}>{visible.map(({ record }: { record: IndexRecord }) => state.layout === "photos" ? <ResultPhotoCard key={record.id} destination={destinations.get(record.id)!} record={record} state={state} returnPath={returnPath} /> : <ResultCard key={record.id} destination={destinations.get(record.id)!} record={record} state={state} returnPath={returnPath} />)}</div>
         {visible.length < results.length && <button className="usa-button usa-button--outline app-more" type="button" onClick={nextPage}>Show more results</button>}</>
         : <div className="app-empty"><h2>No listed matches</h2><p>No destinations are currently listed with all selected features. This may reflect incomplete data rather than confirmed absence.</p><Link href="/explore/">Clear filters</Link></div>}
     </section></div>

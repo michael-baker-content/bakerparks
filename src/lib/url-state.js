@@ -12,6 +12,7 @@ export function readState(search = "") {
     place: params.getAll("place"),
     coverage: params.getAll("coverage"),
     sort: params.get("sort") ?? "relevance", view: params.get("view") === "map" ? "map" : "list",
+    layout: params.get("layout") === "photos" ? "photos" : "list",
     minAmenities: Math.max(0, Number.parseInt(params.get("minAmenities") ?? "0", 10) || 0),
     minAcres: Math.max(0, Number.parseFloat(params.get("minAcres") ?? "0") || 0),
     page: Math.max(1, Number.parseInt(params.get("page") ?? "1", 10) || 1)
@@ -28,6 +29,7 @@ export function stateParams(changes = {}, current = readState()) {
   if (next.minAmenities > 0) params.set("minAmenities", String(next.minAmenities));
   if (next.minAcres > 0) params.set("minAcres", String(next.minAcres));
   if (next.view === "map") params.set("view", "map");
+  if (next.layout === "photos") params.set("layout", "photos");
   if (next.page > 1) params.set("page", String(next.page));
   return params;
 }

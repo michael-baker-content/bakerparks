@@ -1241,3 +1241,40 @@ introductions, wiki citations, representative images, temporary alerts, and
 tile order or visibility can be reviewed without creating a public editing
 surface. The design explicitly identifies the area groupings as navigation
 tools rather than official civic boundaries.
+
+## Session update: visual discovery and governed publishing
+
+- **Two views of the same results:** Explore now offers List and Photo
+  presentations without creating a second search system. List remains the
+  default. Search, filters, sorting, pagination, map visibility, shareable URL
+  state, and return-to-results behavior remain consistent across both views.
+
+- **Honest missing-image state:** Destinations without approved photography
+  remain present in Photo results using labeled, deterministic color gradients.
+  The interface does not substitute a photograph of a different real park and
+  risk implying that it depicts the selected destination.
+
+- **Public photo archive:** Added a searchable, source-filterable archive with
+  responsive twenty-image batches, a keyboard-operable large-image dialog, and
+  visible creator and license links. Area and neighborhood pages link to scoped
+  archive views, while Explore shows one representative image per destination
+  and links onward to the complete collection.
+
+- **Editorial selection without gallery distortion:** The local editor can
+  designate one visible featured image per park. This choice supplies the
+  default for Explore photo tiles, homepage cards, park tiles, and automatic
+  area or neighborhood imagery without changing the destination gallery's
+  narrative order. Shared selection logic and manifest validation prevent
+  conflicting or hidden featured choices.
+
+- **Sustainable media workflow:** The editor now supports visual archive
+  selection for blog covers, slideshows, and landing pages; blog-specific Blob
+  uploads; per-slide caption modes; image hiding, ordering, and catalog removal;
+  and stable editor-section URLs that survive refresh. Public image rights,
+  attribution, alternative text, and responsive Blob delivery remain governed
+  by the reviewed media manifest.
+
+- **Current scale:** The manifest contains 131 visible approved park images
+  across 58 destinations. The repository contains 141 automated test
+  declarations. Passing status and route totals should be recorded only after
+  the final pre-deployment test and production-build run.

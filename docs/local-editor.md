@@ -5,6 +5,10 @@ http://127.0.0.1:4180. Stop it yourself with Ctrl+C. It runs independently of
 the website's development server; agents must not start or stop either server
 without your explicit request.
 
+Each primary editor section has a stable URL fragment: `#parks`, `#places`, or
+`#blogs`. Refreshing the page preserves the selected section, and browser
+back/forward navigation moves between previously visited editor sections.
+
 The editor is intentionally local-only: it binds to loopback, checks the host
 and origin, and requires a per-session save token. It has no public Next.js
 routes and is not deployed. Do not expose it with a tunnel or proxy. There is
@@ -26,16 +30,28 @@ no account/login system.
   `maps.app.goo.gl` links must first be expanded in a browser.
 - Area and neighborhood landing pages: edit the concise introduction, short
   tile description, linked wiki sources, and representative image; create an
-  optional expiring alert; and reorder or hide child tiles. Page names and
+  optional expiring alert; and reorder or hide child tiles. Representative
+  images use the same searchable, twenty-at-a-time visual archive as blog
+  editing, restricted to park imagery. Page names and
   membership remain governed by the populated Explore filter taxonomy. Hidden
   children stay available in the editor. A neighborhood with no park records
   is never published or offered as a filter.
 - All cataloged photographs, including original and second-party images:
-  captions, alt text, creator/attribution, visibility, gallery order, and
-  removal from the catalog. Existing external licenses are read-only;
-  contributor licenses are editable.
-- Blog posts: one Markdown file per post, including existing cover/gallery
-  frontmatter. Full schema validation happens during the production build.
+  captions, alt text, creator/attribution, visibility, gallery order, an
+  optional featured image for each park, and removal from the catalog.
+  Existing external licenses are read-only; contributor licenses are editable.
+  A featured choice controls the default image used on Explore photo tiles,
+  homepage featured-park cards, and automatically selected area or neighborhood
+  imagery. It does not change the park gallery order. With no featured choice,
+  the first visible gallery image remains the fallback.
+- Blog posts: one Markdown file per post, with a visual slideshow builder above
+  the underlying Markdown. The image archive uses lazy-loaded visual tiles,
+  text search, park/blog-only filters, selected states, and a larger metadata
+  preview. It also sets or clears the post cover without requiring a media path
+  edit. Choose any visible photograph, reorder slides, and decide per image
+  whether to use its archive caption, provide a post-specific caption, or show
+  no descriptive caption. Creator and license credit always remains visible.
+  Full schema validation happens during the production build.
 
 Official park inventory, park evergreen context, source coordinates, and nearby
 transit are read-only. Reviewed public map-position overrides are editable.
@@ -85,6 +101,13 @@ Successful uploads immediately become public Blob objects, and append to the
 media manifest and Blob registry. They appear on the live website only
 after deployment. Interrupted uploads can leave unreferenced Blob objects;
 the tool deliberately does not delete them automatically.
+
+The Blog posts tab can also upload a photograph with blog-only scope. It uses
+the same permission, attribution, license, responsive-image, and Blob process,
+but the image is excluded from park galleries and area or neighborhood tiles.
+The upload is added to the current unsaved slideshow; save the blog post after
+choosing its caption behavior and position. Blog-only images remain available
+to other posts through the archive selector.
 
 Save the current form before switching parks or editor sections. Only one
 editor instance should be used at a time; simultaneous external file edits

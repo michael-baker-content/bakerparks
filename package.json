@@ -33,6 +33,7 @@
     "report:official-page-review": "node scripts/build-official-page-review-report.mjs",
     "build:directory-features": "node scripts/build-directory-feature-enrichments.mjs",
     "test": "node --test",
+    "precheck": "next typegen",
     "check": "tsc --noEmit"
   },
   "dependencies": {

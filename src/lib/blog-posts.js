@@ -22,10 +22,12 @@ export function getBlogPostImage(post) {
 }
 
 export function getBlogPostSlides(post) {
-  return (post.gallery ?? []).filter((path) => !mediaManifest.images.some((image) => image.localPath === path && image.visible === false)).map((path) => {
+  return (post.gallery ?? []).map((slide) => typeof slide === "string" ? { path: slide, captionMode: "database" } : slide).filter(({ path }) => !mediaManifest.images.some((image) => image.localPath === path && image.visible === false)).map((slide) => {
+    const { path } = slide;
     const record = mediaManifest.images.find((image) => image.localPath === path);
     if (!record) throw new Error(`No reviewed media record is available for blog gallery image ${path}.`);
-    return { ...record, ...resolveRequiredMediaAsset(path) };
+    const caption = slide.captionMode === "none" ? "" : slide.captionMode === "custom" ? slide.caption.trim() : record.caption;
+    return { ...record, caption, ...resolveRequiredMediaAsset(path) };
   });
 }
 

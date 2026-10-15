@@ -15,9 +15,13 @@ Francisco.
 - Permanent destination pages with amenities and reviewed evergreen context
 - MapLibre results with two-size destination markers, stable in-place sorting,
   and optional Google Maps embeds
+- List and photo presentations for the same filtered Explore results, with
+  calm gradient placeholders where a destination lacks approved photography
 - Build-time Muni, BART, and Caltrain guidance from 511 SF Bay
 - Official program and reservation handoffs
 - A static project blog for announcing destination enrichment and product updates
+- A public photo archive with caption and photographer search, source filters,
+  20-image progressive batches, and a keyboard-accessible large-image viewer
 - A rotating set of four image-supported featured parks selected from ten
   detailed destinations on each homepage load
 - Statement-level source links, with a scannable panel when an overview uses
@@ -36,9 +40,12 @@ Create one Markdown file in `content/blog/`. Its filename becomes the page
 address, and the opening front matter supplies the title, summary, and date.
 Posts use standard Markdown, including headings, emphasis, links, quotations,
 and lists. Optional `actionLabel` and `actionHref` fields add a closing
-call-to-action button. Content Collections validates the front matter, compiles
-the Markdown, and generates the typed content used by the blog index and
-individual static pages during the next build.
+call-to-action button. The local editor can visually select a cover, build a
+slideshow from reviewed archive images, apply an archive, custom, or hidden
+caption to each slide, and upload blog-only images to Vercel Blob. Image credit
+remains visible regardless of caption choice. Content Collections validates the
+front matter, compiles the Markdown, and generates the typed content used by the
+blog index and individual static pages during the next build.
 
 ## Current project status
 
@@ -48,12 +55,12 @@ individual static pages during the next build.
 - 198 destinations with approved evergreen narrative records; the broader
   enriched total also includes reviewed facility-directory features
 - 3,314 transit stops and stations across 85 routes
-- 80 approved images across 42 destinations, with a generic regional
-  photograph used elsewhere rather than an unverified location image
+- 131 visible approved park images across 58 destinations; Explore uses an
+  explicitly labeled gradient when a destination lacks reviewed photography
 - 2 generated editorial illustrations supporting the programs and reservations
   guide
 - Official park-property area available for all 249 public destinations
-- 133 passing automated tests, plus a successful TypeScript check and static
+- 141 automated checks, plus TypeScript validation and a static
   production build
 
 ## Run locally
@@ -61,7 +68,7 @@ individual static pages during the next build.
 For local editing, run `npm run admin` with Node.js 24 and open
 `http://127.0.0.1:4180`. Manage notices, reviewed map-position overrides, all
 cataloged photos, area and neighborhood landing pages, Blob uploads, and
-Markdown blog posts without exposing editing on the live site. Saves
+Markdown blog posts and slideshows without exposing editing on the live site. Saves
 update project files immediately; publishing still requires building and
 deploying. See [local editor instructions](docs/local-editor.md) for backups,
 expiration dates, and image rights.
@@ -133,10 +140,22 @@ catalog to interactive browser components. After upload and verification,
 archive the source photographs outside the repository and clear the local
 intake directory; the application does not require those source files.
 
-Manage captions, alt text, credits, visibility, gallery order, and catalog
-removal in the [local editor](docs/local-editor.md). Removing an entry retains
-its public Blob file for recovery. All cataloged photographs appear in the
-editor, including new uploads. The CSV review workflow has been retired.
+Manage captions, alt text, credits, visibility, gallery order, destination
+featured-image choices, and catalog removal in the
+[local editor](docs/local-editor.md). A featured image becomes that park's
+default in Explore photo tiles, homepage cards, and other automatic
+representative-image placements without changing its gallery order. Removing
+an entry retains its public Blob file for recovery. All cataloged photographs
+appear in the editor, including new uploads. The CSV review workflow has been
+retired.
+
+The public **Photos** page includes visible destination photographs and any
+blog-only upload that has actually been used by a published post. Unused
+blog-only uploads remain private to the local editorial workflow. Archive tiles
+load in batches of 20, and every published image retains its reviewed creator,
+source, and license links. Area and neighborhood pages link into geographically
+filtered archive views; visitors can change or clear that scope on the archive
+page itself.
 
 Blog posts use the generic San Francisco park illustration by default. To choose
 another reviewed Blob asset for a post card, add its stable registry path and
@@ -151,15 +170,24 @@ image:
 The path must already exist in `data/media/blob-assets.json`; an unknown path
 fails the production build rather than publishing a broken image.
 
-To add a slideshow to a post, list two or more reviewed image paths. Captions,
-alt text, creator credits, source links, and licenses are inherited from
-`data/media/media-manifest.json`:
+To add a slideshow to a post, choose two or more reviewed images in the local
+editor. Alt text, creator credits, source links, and licenses are inherited
+from `data/media/media-manifest.json`. Each slide can use its archive caption,
+provide a post-specific caption, or suppress the descriptive caption while
+retaining the image credit:
 
 ```yaml
 gallery:
-  - /media/alamo-square-01.jpg
-  - /media/sigmund-stern-recreation-grove-01.jpg
+  - path: /media/alamo-square-01.jpg
+    captionMode: database
+  - path: /media/sigmund-stern-recreation-grove-01.jpg
+    captionMode: custom
+    caption: A post-specific description of this moment in the project.
+  - path: /media/golden-gate-park-02.jpg
+    captionMode: none
 ```
+
+The earlier path-only list remains valid and is treated as `database` mode.
 
 ## Refresh data
 
@@ -220,4 +248,3 @@ additions, missing official pages, and genuinely pending work. A completed
 - [Evergreen content policy](docs/evergreen-content-enrichment-policy.md)
 - [Imagery policy](docs/imagery-enrichment-policy.md)
 - [Case-study notes](docs/case-study-notes.md)
-- [First-person blog-post draft](docs/blog-post-draft.md)

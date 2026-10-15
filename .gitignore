@@ -5,6 +5,7 @@ out/
 .content-collections/
 coverage/
 *.tsbuildinfo
+next-env.d.ts
 
 # Private local configuration
 .env

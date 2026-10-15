@@ -51,6 +51,15 @@ The sampled pages have:
 
 ## Remaining manual checks
 
+- Exercise the Explore List/Photo selector with keyboard and screen-reader
+  navigation while the map is both open and closed; confirm that URL state,
+  result order, return focus, and the selected-state announcement remain clear.
+- Review photo-result gradient placeholders at supported viewport widths and
+  under forced-colors or increased-contrast settings. Confirm that their “No
+  photograph available” label is not mistaken for destination imagery.
+- Test the public photo archive's search and geography selectors, twenty-image
+  batching, dialog focus behavior, arrow-key navigation, close behavior, and
+  source/license links with NVDA and VoiceOver.
 - Repeat the representative task flows with hands-on keyboard-only and
   screen-reader sessions; browser automation does not substitute for these.
 - Test representative pages with NVDA and VoiceOver, including announcements

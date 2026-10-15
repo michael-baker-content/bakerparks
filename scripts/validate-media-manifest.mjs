@@ -21,6 +21,7 @@ export function validateMediaManifest(manifest) {
   if (!Array.isArray(manifest.images)) return [...errors, "images must be an array."];
   const sourceAssets = new Set();
   const slidePositions = new Set();
+  const featuredDestinations = new Set();
   for (const [position, image] of manifest.images.entries()) {
     const label = image.destinationId || `images[${position}]`;
     for (const field of requiredText) if (typeof image[field] !== "string" || !image[field].trim()) errors.push(`${label}: missing ${field}.`);
@@ -44,6 +45,14 @@ export function validateMediaManifest(manifest) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(image.reviewedAt ?? "")) errors.push(`${label}: reviewedAt must use YYYY-MM-DD.`);
     if (!/^\/media\/[a-z0-9-]+\.(jpg|jpeg|png|webp)$/.test(image.localPath ?? "")) errors.push(`${label}: invalid localPath.`);
     if (image.visible !== undefined && typeof image.visible !== "boolean") errors.push(`${label}: visible must be a boolean.`);
+    if (image.featured !== undefined && typeof image.featured !== "boolean") errors.push(`${label}: featured must be a boolean.`);
+    if (image.featured === true) {
+      if (image.visible === false || image.usageScope === "blog") errors.push(`${label}: a featured destination image must be visible and available to park pages.`);
+      if (featuredDestinations.has(image.destinationId)) errors.push(`${label}: only one featured image is allowed per destination.`);
+      featuredDestinations.add(image.destinationId);
+    }
+    if (image.usageScope !== undefined && image.usageScope !== "blog") errors.push(`${label}: usageScope must be blog when provided.`);
+    if (image.usageScope === "blog" && image.destinationId !== "blog-only") errors.push(`${label}: blog-only images must use the blog-only destination.`);
     if (!Number.isInteger(image.position) || image.position < 1) errors.push(`${label}: position must be a positive integer.`);
     if (!Number.isInteger(image.width) || image.width < 1 || !Number.isInteger(image.height) || image.height < 1) errors.push(`${label}: valid image dimensions are required.`);
     const positionKey = `${image.destinationId}:${image.position}`;

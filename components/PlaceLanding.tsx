@@ -35,10 +35,10 @@ export function PlaceTiles({ heading, tiles }: { heading: string; tiles: Tile[] 
   </article>)}</div></section>;
 }
 
-export function PlaceLanding({ eyebrow, page, children }: { eyebrow: string; page: Page; children: React.ReactNode }) {
+export function PlaceLanding({ eyebrow, page, photoHref, children }: { eyebrow: string; page: Page; photoHref?: string; children: React.ReactNode }) {
   const activeAlert = page.alert ? getActiveParkNotice({ alerts: [page.alert] }, page.alert.destinationId) : undefined;
   return <article className="app-place-landing"><header className="app-place-header"><div><p className="app-eyebrow">{eyebrow}</p><h1>{page.name}</h1><p className="app-lede">{page.shortDescription}</p></div><figure><div className="app-place-header__image"><Picture image={page.image} sizes="(max-width: 48rem) 100vw, 44vw" /></div><figcaption><Credit image={page.image} /></figcaption></figure></header>
-    <section className="app-place-overview" aria-labelledby="place-overview-title"><h2 id="place-overview-title">About this area</h2><p>{page.overview}</p><PlaceSourceDialog name={page.name} sources={page.sources} /></section>
+    <section className="app-place-overview" aria-labelledby="place-overview-title"><h2 id="place-overview-title">About this area</h2><p>{page.overview}</p><div className="app-place-overview__actions"><PlaceSourceDialog name={page.name} sources={page.sources} />{photoHref ? <Link className="usa-button usa-button--outline" href={photoHref}>Browse photos from this {eyebrow.toLocaleLowerCase()}</Link> : null}</div></section>
     {activeAlert ? <ParkAlert notice={activeAlert} /> : null}
     {children}
   </article>;

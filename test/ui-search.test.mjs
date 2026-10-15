@@ -143,3 +143,12 @@ test("map view remains encoded in shareable result state", () => {
   assert.equal(state.view, "map");
   assert.match(stateUrl(state, state), /view=map/);
 });
+
+test("photo results remain independent from the optional map", () => {
+  const state = readState("?q=tennis&view=map&layout=photos");
+  assert.equal(state.view, "map");
+  assert.equal(state.layout, "photos");
+  assert.match(stateUrl(state, state), /view=map/);
+  assert.match(stateUrl(state, state), /layout=photos/);
+  assert.equal(readState("").layout, "list");
+});

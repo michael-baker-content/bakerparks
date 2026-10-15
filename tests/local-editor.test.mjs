@@ -5,6 +5,23 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { coordinatesFromGoogleMapsUrl, openStore, validateNotice } from "../tools/admin/store.mjs";
 import { getActiveParkNotice } from "../src/lib/park-notices.js";
+import { validateMediaManifest } from "../scripts/validate-media-manifest.mjs";
+
+test("editor sections survive refresh and participate in browser history", async () => {
+  const client = await readFile(new URL("../tools/admin/admin.js", import.meta.url), "utf8");
+  assert.match(client, /const sections = \{ parks: renderPark, places: renderPlacePages, blogs: renderBlogs \}/);
+  assert.match(client, /window\.location\.hash = hash/);
+  assert.match(client, /addEventListener\("hashchange"/);
+  assert.match(client, /history\.replaceState\(null, "", "#parks"\)/);
+});
+
+test("blog-only media remains valid but is explicitly scoped away from park pages", async () => {
+  const manifest = JSON.parse(await readFile(new URL("../data/media/media-manifest.json", import.meta.url)));
+  const original = manifest.images.find((image) => image.sourceType === "project-original");
+  const blogImage = { ...original, destinationId: "blog-only", usageScope: "blog", position: 1, localPath: "/media/blog-test-image.jpg", originalFilename: `blog-${original.originalFilename}` };
+  assert.deepEqual(validateMediaManifest({ ...manifest, images: [blogImage] }), []);
+  assert.ok(validateMediaManifest({ ...manifest, images: [{ ...blogImage, destinationId: "park" }] }).some((error) => /blog-only destination/.test(error)));
+});
 
 test("notices expire after the chosen San Francisco day and fail closed when inactive", () => {
   const notice = { destinationId: "park", active: true, title: "Notice", body: "Body", expiresOn: "2026-09-17" };
@@ -61,6 +78,8 @@ test("local editor seeds photos, preserves sources, and safely removes catalog e
     const parkId = before.images[0].destinationId;
     const drafts = before.images.filter((image) => image.destinationId === parkId).reverse().map((image) => ({ ...image, visible: true }));
     drafts[0].visible = false;
+    const featuredDraft = drafts.find((image) => image.visible !== false);
+    if (featuredDraft) featuredDraft.featured = true;
     drafts[0].caption = "Reviewed editorial caption";
     await store.saveImages({ destinationId: parkId, images: drafts });
     const after = await store.state();
@@ -70,6 +89,7 @@ test("local editor seeds photos, preserves sources, and safely removes catalog e
     assert.equal(edited.caption, drafts[0].caption);
     assert.equal(edited.imageUrl, drafts[0].imageUrl);
     assert.equal(after.images.length, before.images.length);
+    if (featuredDraft) assert.equal(after.images.find((image) => image.localPath === featuredDraft.localPath).featured, true);
     await assert.rejects(readFile(join(root, "photo-metadata-review.csv")), { code: "ENOENT" });
     await assert.rejects(store.saveImages({ destinationId: parkId, images: [{ ...drafts[0], localPath: "/media/not-cataloged.jpg" }] }), /unknown or duplicate/);
     const removable = after.images.find((image) => !before.blogs.some((post) => post.markdown.includes(image.localPath)));

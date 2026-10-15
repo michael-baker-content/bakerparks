@@ -26,7 +26,7 @@ const server = createServer(async (request, response) => {
       return;
     }
     if (request.method === "GET" && pathname === "/api/state") return json(200, { ...(await store.state()), token });
-    if (request.method !== "POST" || !["/api/notices", "/api/coordinates", "/api/place-pages", "/api/images", "/api/blogs", "/api/upload"].includes(pathname)) return json(404, { error: "Not found." });
+    if (request.method !== "POST" || !["/api/notices", "/api/coordinates", "/api/place-pages", "/api/images", "/api/blogs", "/api/upload", "/api/blog-upload"].includes(pathname)) return json(404, { error: "Not found." });
     if (request.headers["x-admin-token"] !== token || request.headers.origin !== `http://${request.headers.host}`) return json(403, { error: "Reload the local admin page before saving." });
     if (!request.headers["content-type"]?.startsWith("application/json")) return json(415, { error: "JSON required." });
     const chunks = [];
@@ -39,7 +39,7 @@ const server = createServer(async (request, response) => {
       if (pathname === "/api/place-pages") return store.savePlacePage(value);
       if (pathname === "/api/images") return store.saveImages(value);
       if (pathname === "/api/blogs") return store.saveBlog(value);
-      return store.upload(value);
+      return store.upload(pathname === "/api/blog-upload" ? { ...value, scope: "blog" } : value);
     });
     mutationQueue = operation.catch(() => {});
     const result = await operation;

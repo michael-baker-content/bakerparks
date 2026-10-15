@@ -131,6 +131,7 @@ export async function openStore(root) {
       const current = document.images.filter((image) => image.destinationId === value.destinationId);
       const submittedPaths = new Set(value.images.map((image) => image.localPath));
       if (submittedPaths.size !== value.images.length || value.images.some((image) => !current.some((item) => item.localPath === image.localPath))) throw new Error("Image changes contain an unknown or duplicate image.");
+      if (value.images.filter((image) => image.featured === true).length > 1) throw new Error("Choose no more than one featured image for this park.");
       const removed = current.filter((image) => !submittedPaths.has(image.localPath));
       if (removed.length) {
         const posts = await blogs();
@@ -140,7 +141,7 @@ export async function openStore(root) {
       const updates = new Map(value.images.map((image, index) => {
         const original = current.find((item) => item.localPath === image.localPath);
         if (!original || typeof image.visible !== "boolean") throw new Error("Invalid image identity or visibility.");
-        const updated = { ...original, caption: text(image.caption, "Caption"), alt: text(image.alt, "Alt text"), creator: text(image.creator, "Creator"), attribution: text(image.attribution, "Attribution"), visible: image.visible, position: index + 1 };
+        const updated = { ...original, caption: text(image.caption, "Caption"), alt: text(image.alt, "Alt text"), creator: text(image.creator, "Creator"), attribution: text(image.attribution, "Attribution"), visible: image.visible, featured: image.featured === true, position: index + 1 };
         if (original.sourceType === "project-original") { updated.licenseId = text(image.licenseId, "License"); updated.licenseUrl = text(image.licenseUrl, "License URL"); }
         return [original.localPath, updated];
       }));
@@ -162,7 +163,9 @@ export async function openStore(root) {
       recordEdit("blog", value.slug, { slug: value.slug, markdown });
     },
     async upload(value) {
-      if (!ids.has(value.destinationId)) throw new Error("Unknown park.");
+      const blogOnly = value.scope === "blog";
+      const destinationId = blogOnly ? "blog-only" : value.destinationId;
+      if (!blogOnly && !ids.has(destinationId)) throw new Error("Unknown park.");
       if (value.permission !== "on" && value.permission !== true) throw new Error("Confirm permission to publish this photograph.");
       if (!process.env.BLOB_READ_WRITE_TOKEN) throw new Error("BLOB_READ_WRITE_TOKEN is missing from .env.local.");
       const caption = text(value.caption, "Caption"), alt = text(value.alt, "Alt text"), creator = text(value.creator, "Creator"), attribution = text(value.attribution, "Attribution");
@@ -174,9 +177,9 @@ export async function openStore(root) {
       if (!["jpeg", "png", "webp"].includes(metadata.format)) throw new Error("Upload a JPEG, PNG, or WebP image.");
       const oriented = await sharp(bytes).rotate().toBuffer({ resolveWithObject: true });
       const hash = createHash("sha256").update(bytes).digest("hex").slice(0, 12);
-      const stem = `${value.destinationId}-${randomUUID()}`;
+      const stem = `${blogOnly ? "blog" : destinationId}-${randomUUID()}`;
       const document = await read(files.media);
-      const image = { destinationId: value.destinationId, position: Math.max(0, ...document.images.filter((item) => item.destinationId === value.destinationId).map((item) => item.position)) + 1, sourceType: "project-original", originalFilename: `${stem}-${originalFilename}`, localPath: `/media/${stem}.jpg`, width: oriented.info.width, height: oriented.info.height, caption, alt, creator, attribution, licenseId: value.licenseId, licenseUrl: value.licenseUrl, visible: true, reviewedAt: new Date().toISOString().slice(0, 10), sourceRevision: `Contributor upload: ${originalFilename}; SHA256 ${createHash("sha256").update(bytes).digest("hex")}`, filePageUrl: "https://validation.public.blob.vercel-storage.com/pending.webp", imageUrl: "https://validation.public.blob.vercel-storage.com/pending.webp" };
+      const image = { destinationId, ...(blogOnly ? { usageScope: "blog" } : {}), position: Math.max(0, ...document.images.filter((item) => item.destinationId === destinationId).map((item) => item.position)) + 1, sourceType: "project-original", originalFilename: `${stem}-${originalFilename}`, localPath: `/media/${stem}.jpg`, width: oriented.info.width, height: oriented.info.height, caption, alt, creator, attribution, licenseId: value.licenseId, licenseUrl: value.licenseUrl, visible: true, reviewedAt: new Date().toISOString().slice(0, 10), sourceRevision: `Contributor upload: ${originalFilename}; SHA256 ${createHash("sha256").update(bytes).digest("hex")}`, filePageUrl: "https://validation.public.blob.vercel-storage.com/pending.webp", imageUrl: "https://validation.public.blob.vercel-storage.com/pending.webp" };
       assertManifest({ ...document, images: [...document.images, image] });
       const variants = [];
       for (const width of [...new Set([640, 1280].map((target) => Math.min(target, oriented.info.width)))]) {

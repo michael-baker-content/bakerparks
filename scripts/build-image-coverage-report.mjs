@@ -78,7 +78,7 @@ for (const review of allReviews) {
 }
 
 const records = destinations.map((destination) => {
-  const images = (imagesByDestination.get(destination.id) ?? []).sort((left, right) => left.position - right.position);
+  const images = (imagesByDestination.get(destination.id) ?? []).sort((left, right) => Number(right.featured === true) - Number(left.featured === true) || left.position - right.position);
   const reviews = reviewsByDestination.get(destination.id) ?? [];
   const score = priorityScore(destination, images.length, reviews);
   return {

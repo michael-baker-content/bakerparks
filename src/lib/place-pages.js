@@ -5,11 +5,11 @@ import destinations from "../../data/presentation/generated/destinations.json" w
 import media from "../../data/media/media-manifest.json" with { type: "json" };
 import parkAlerts from "../../data/content/park-alerts.json" with { type: "json" };
 import { getActiveParkNotice } from "./park-notices.js";
+import { representativeDestinationImageMap } from "./representative-image.js";
 
 const destinationsById = new Map(destinations.records.map((record) => [record.id, record]));
-const visibleImages = media.images.filter((image) => image.visible !== false).sort((a, b) => a.position - b.position);
-const firstImageByDestination = new Map();
-for (const image of visibleImages) if (!firstImageByDestination.has(image.destinationId)) firstImageByDestination.set(image.destinationId, image);
+const visibleImages = media.images.filter((image) => image.visible !== false && image.usageScope !== "blog").sort((a, b) => a.position - b.position);
+const firstImageByDestination = representativeDestinationImageMap(media.images);
 const noticedDestinationIds = new Set(parkAlerts.alerts.filter((notice) => getActiveParkNotice({ alerts: [notice] }, notice.destinationId)).map((notice) => notice.destinationId));
 
 function destinationSignificance(destinationId) {
@@ -38,6 +38,10 @@ function ordered(items, record) {
 export function imageForPage(record, destinationIds = []) {
   if (record.imagePath) return visibleImages.find((image) => image.localPath === record.imagePath);
   return representativeImage(destinationIds);
+}
+
+export function hasVisibleDestinationImages(destinationIds = []) {
+  return destinationIds.some((id) => firstImageByDestination.has(id));
 }
 
 export function getNeighborhoods(document = content) {

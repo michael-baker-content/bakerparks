@@ -14,7 +14,16 @@ const blogPosts = defineCollection({
       path: z.string().regex(/^\/media\/[a-z0-9-]+\.(?:jpg|png|webp)$/),
       alt: z.string().min(1),
     }).optional(),
-    gallery: z.array(z.string().regex(/^\/media\/[a-z0-9-]+\.(?:jpg|png|webp)$/)).min(2).optional(),
+    gallery: z.array(z.union([
+      z.string().regex(/^\/media\/[a-z0-9-]+\.(?:jpg|png|webp)$/),
+      z.object({
+        path: z.string().regex(/^\/media\/[a-z0-9-]+\.(?:jpg|png|webp)$/),
+        captionMode: z.enum(["database", "custom", "none"]).default("database"),
+        caption: z.string().min(1).optional(),
+      }).superRefine((slide, context) => {
+        if (slide.captionMode === "custom" && !slide.caption?.trim()) context.addIssue({ code: "custom", message: "A custom gallery caption is required when captionMode is custom." });
+      }),
+    ])).min(2).optional(),
     actionLabel: z.string().min(1).optional(),
     actionHref: z.string().min(1).optional(),
     content: z.string(),

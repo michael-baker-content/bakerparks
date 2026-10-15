@@ -18,7 +18,7 @@ export function BlogSlideshow({ slides }: { slides: BlogSlide[] }) {
         <img src={slide.src} srcSet={slide.srcSet} sizes="(max-width: 56rem) 100vw, 56rem" width={slide.width} height={slide.height} alt={slide.alt} />
       </div>
       <figcaption>
-        <p>{slide.caption}</p>
+        {slide.caption ? <p>{slide.caption}</p> : null}
         <ImageCredit image={slide} className="app-blog-slideshow__credit" />
       </figcaption>
     </figure>

@@ -6,6 +6,7 @@ import evergreenContent from "../data/content/evergreen-content.json";
 import mediaManifest from "../data/media/media-manifest.json";
 import { FeaturedParks } from "../components/FeaturedParks";
 import { resolveMediaAsset } from "../src/lib/media-delivery.js";
+import { representativeDestinationImage } from "../src/lib/representative-image.js";
 
 const featuredIds = [
   "golden-gate-park", "mission-dolores-park", "sigmund-stern-recreation-grove", "lafayette-park",
@@ -18,7 +19,7 @@ const featuredParks = featuredIds.filter((id) => mediaManifest.images.some((item
   amenityCount: destinationsDocument.records.find((item) => item.id === id)!.amenities.length,
   overview: evergreenContent.records.find((item) => item.destinationId === id)!.overview.text,
   image: (() => {
-    const image = mediaManifest.images.filter((item) => item.destinationId === id && (item as { visible?: boolean }).visible !== false).sort((a, b) => a.position - b.position)[0];
+    const image = representativeDestinationImage(mediaManifest.images, id)!;
     return { ...image, ...resolveMediaAsset(image.localPath, image.width, image.height) };
   })(),
 }));
